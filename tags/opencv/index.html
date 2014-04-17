@@ -1,0 +1,192 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>opencv | Flight log</title>
+  <meta name="author" content="Hugo Feng">
+  
+  <meta name="description" content="About code, machine learning, and life">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+  <meta property="og:site_name" content="Flight log"/>
+
+  
+    <meta property="og:image" content="undefined"/>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="Flight log" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js"></script>
+  
+</head>
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">Flight log</a></h1>
+  <h2><a href="/">Part of Hugo&#39;s life.</a></h2>
+</div>
+<nav id="main-nav">
+  <ul>
+    
+      <li><a href="/">Home</a></li>
+    
+      <li><a href="/archives">Archives</a></li>
+    
+      <li><a href="/about">About</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div>
+<div class="alignleft" style="margin-top: 15px">
+
+
+</div>
+<div class="clearfix"></div>
+</header>
+  <div id="content" class="inner">
+    <div id="wrapper">
+<h2 class="archive-title tag">opencv</h2>
+
+
+  
+    <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <header>
+      
+  
+    <h1 class="title"><a href="/2014/04/17/Compile OpenCV3.0 on OSX/">Compile OpenCV 3.0 on OSX</a></h1>
+  
+
+      
+        <p class="published">
+          Published: <time datetime="2014-04-17T15:37:43.000Z">Apr 17 2014</time>
+        </p>
+      
+    </header>
+    <div class="entry">
+      
+        <h2 id="Install">Install</h2>
+<p>Installing OpenCV on Mac can be fairly simple—using homebrew, however, homebrew can only install a stable version of it(currently 2.4.8.2). If you want to have a taste of OpenCV3.0, you’ll have to build from the source. This sometimes can be very annoying[1][2]. After more than a day’s struggle, I find a solution for my machine.</p>
+<p>If you have anaconda installed, probably the vtk module has a version of 5.x, but OpenCV3.0 need vtk at least 6.1.[1]</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
+</pre></td><td class="code"><pre><span class="variable">$ </span>brew install vtk   <span class="comment"># This gonna take some time</span>
+</pre></td></tr></table></figure>
+
+
+<p>Now download the latest OpenCV source:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
+</pre></td><td class="code"><pre><span class="variable">$ </span>git clone git<span class="variable">@github</span>.<span class="symbol">com:</span><span class="constant">Itseez</span>/opencv.git
+</pre></td></tr></table></figure>
+
+
+<p>Go to OpenCV source folder, </p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
+2
+3
+</pre></td><td class="code"><pre><span class="variable">$ </span>mkdir build
+<span class="variable">$ </span>cd build
+<span class="variable">$ </span>cmake <span class="string">"Unix Makefile"</span> -<span class="constant">D</span> <span class="constant">CMAKE_OSX_ARCHITECTURES</span>=x86_64 -<span class="constant">D</span> <span class="constant">BUILD_PERF_TESTS</span>=<span class="constant">OFF</span> ..
+</pre></td></tr></table></figure>
+
+
+<p>Since OpenCV module ‘viz’ has to be compiled with libc++ instead of libstdc++, we need to make some changes to the makefiles to ensure it is compiled that way.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
+2
+</pre></td><td class="code"><pre><span class="variable">$ </span>cd modules/viz/<span class="constant">CMakeFiles</span>/opencv_viz.dir/
+<span class="variable">$ </span>vim flags.make
+</pre></td></tr></table></figure>
+
+
+<p>Add flag <code>-std=c++11 -stdlib=libc++</code><br>Do the same to build/modules/viz/CMakeFiles/opencv_test_viz.dir/flags.make<br>Now back to the build folder. </p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
+</pre></td><td class="code"><pre><span class="variable">$ </span>make -j8  <span class="comment"># Using 8 threads to build</span>
+</pre></td></tr></table></figure>
+
+
+<p>And it should work fine.<br>Now finish up:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
+</pre></td><td class="code"><pre><span class="variable">$ </span>make install
+</pre></td></tr></table></figure>
+
+
+<h2 id="Check">Check</h2>
+<p>There’re generally 2 ways to check OpenCV’s version. </p>
+<ol>
+<li>In the OpenCV source folder. modules/core/include/opencv2/core/version.hpp </li>
+<li>After <code>make install</code>, you can see the copied libraries, they are usually named with version numbers. Like “libopencv_core.3.0.0.dylib”.</li>
+</ol>
+<p>Also, you can use <code>pkg-config</code> to check if the libs are correctly located.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
+</pre></td><td class="code"><pre><span class="variable">$pkg</span><span class="attribute">-config</span> <span class="subst">--</span>libs opencv
+</pre></td></tr></table></figure>
+
+
+<p>The output will look like this:</p>
+<pre><code>/usr/<span class="built_in">local</span>/lib/libopencv_calib3d.dylib /usr/<span class="built_in">local</span>/lib/libopencv_contrib.dylib /usr/<span class="built_in">local</span>/lib/libopencv_core.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cuda.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudaarithm.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudabgsegm.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudafeatures2d.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudafilters.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudaimgproc.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudaoptflow.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudastereo.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudawarping.dylib /usr/<span class="built_in">local</span>/lib/libopencv_features2d.dylib /usr/<span class="built_in">local</span>/lib/libopencv_flann.dylib /usr/<span class="built_in">local</span>/lib/libopencv_highgui.dylib /usr/<span class="built_in">local</span>/lib/libopencv_imgproc.dylib /usr/<span class="built_in">local</span>/lib/libopencv_legacy.dylib /usr/<span class="built_in">local</span>/lib/libopencv_ml.dylib /usr/<span class="built_in">local</span>/lib/libopencv_nonfree.dylib /usr/<span class="built_in">local</span>/lib/libopencv_objdetect.dylib /usr/<span class="built_in">local</span>/lib/libopencv_optim.dylib /usr/<span class="built_in">local</span>/lib/libopencv_photo.dylib /usr/<span class="built_in">local</span>/lib/libopencv_shape.dylib /usr/<span class="built_in">local</span>/lib/libopencv_softcascade.dylib /usr/<span class="built_in">local</span>/lib/libopencv_stitching.dylib /usr/<span class="built_in">local</span>/lib/libopencv_superres.dylib /usr/<span class="built_in">local</span>/lib/libopencv_ts.<span class="operator">a</span> /usr/<span class="built_in">local</span>/lib/libopencv_video.dylib /usr/<span class="built_in">local</span>/lib/libopencv_videostab.dylib /usr/<span class="built_in">local</span>/lib/libopencv_viz.dylib
+</code></pre><p>ref:<br>[1] <a href="http://code.opencv.org/issues/3582" target="_blank">http://code.opencv.org/issues/3582</a><br>[2] <a href="http://stackoverflow.com/questions/19671827/opencv-installation-on-mac-os-x" target="_blank">http://stackoverflow.com/questions/19671827/opencv-installation-on-mac-os-x</a><br>[3] <a href="http://ibivanchev.blogspot.be/2013/10/opencv-mac-os-x-109.html" target="_blank">http://ibivanchev.blogspot.be/2013/10/opencv-mac-os-x-109.html</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+<!-- hackish -->
+
+  
+
+  <nav id="pagination">
+  
+  
+  <div class="clearfix"></div>
+</nav>
+</div>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2014 Hugo Feng
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>
