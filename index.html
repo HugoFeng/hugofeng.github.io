@@ -24,6 +24,36 @@
   <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js"></script>
   
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 </head>
 
 <body>
@@ -170,7 +200,7 @@ hexo deploy
     <div class="entry">
       
         <h2 id="Install">Install</h2>
-<p>Installing OpenCV on Mac can be fairly simple—using homebrew, however, homebrew can only install a stable version of it(currently 2.4.8.2). If you want to have a taste of OpenCV3.0, you’ll have to build from the source. This sometimes can be very annoying[1][2]. After more than a day’s struggle, I find a solution for my machine.</p>
+<p>Installing OpenCV on Mac can be fairly simple—using <code>homebrew</code>, however, <code>homebrew</code> can only install a stable version of it(currently 2.4.8.2). If you want to have a taste of OpenCV3.0, you’ll have to build from the source. This sometimes can be very annoying[1][2]. After more than a day’s struggle, I find a solution for my machine.</p>
 <p>If you have anaconda installed, probably the vtk module has a version of 5.x, but OpenCV3.0 need vtk at least 6.1.[1]</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre>1
 </pre></td><td class="code"><pre><span class="variable">$ </span>brew install vtk   <span class="comment"># This gonna take some time</span>

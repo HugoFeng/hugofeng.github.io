@@ -4,7 +4,7 @@ tags: [opencv]
 ---
 ## Install
 
-Installing OpenCV on Mac can be fairly simple--using homebrew, however, homebrew can only install a stable version of it(currently 2.4.8.2). If you want to have a taste of OpenCV3.0, you'll have to build from the source. This sometimes can be very annoying[1][2]. After more than a day's struggle, I find a solution for my machine.
+Installing OpenCV on Mac can be fairly simple--using `homebrew`, however, `homebrew` can only install a stable version of it(currently 2.4.8.2). If you want to have a taste of OpenCV3.0, you'll have to build from the source. This sometimes can be very annoying[1][2]. After more than a day's struggle, I find a solution for my machine.
 
 If you have anaconda installed, probably the vtk module has a version of 5.x, but OpenCV3.0 need vtk at least 6.1.[1]
 
