@@ -1,3 +1,4 @@
+@import url("//fonts.googleapis.com/css?family=Lato:400,400italic");
 @font-face {
   font-family: 'FontAwesome';
   font-style: normal;
@@ -103,12 +104,10 @@ a:hover {
 #header {
   text-shadow: 0 0 1px #fff;
   margin: 50px auto;
-  margin-left: auto;
-  margin-right: auto;
-  width: 900px;
-  max-width: 100%;
 }
-#header a color ##58fb8,
+#header a {
+  color: #258fb8;
+}
 #header a:hover {
   color: #258fb8;
   text-decoration: none;
@@ -127,7 +126,6 @@ a:hover {
 #header #main-nav {
   font-family: "Lato", Helvetica Neue, Helvetica, Arial, sans-serif;
   line-height: 2.5em;
-  float: right;
 }
 #header #main-nav ul {
   list-style: none;
@@ -136,14 +134,13 @@ a:hover {
   float: left;
   margin-left: 30px;
 }
-@media screen and (max-width: 600px) {
-  #header #main-nav {
-    float: left;
-    margin-left: -30px;
-  }
-}
 article {
+  -webkit-box-shadow: 1px 2px 3px #ddd;
+  box-shadow: 1px 2px 3px #ddd;
   background: #fff;
+}
+article.page {
+  padding-left: 20px;
 }
 article.page .icon {
   display: none;
@@ -165,12 +162,16 @@ article.link .title a:after {
   vertical-align: super;
 }
 article .post-content {
-  margin: 0px;
-  padding: 20px 0;
+  padding: 20px 20px 15px 77px;
+  margin-bottom: 30px;
   position: relative;
 }
+@media screen and (max-width: 600px) {
+  article .post-content {
+    padding-left: 20px;
+  }
+}
 article .gallery {
-  margin: 0px;
   overflow: hidden;
   position: relative;
 }
@@ -234,9 +235,9 @@ article .gallery .next:before {
   right: 10px;
 }
 article header .icon {
-  width: 0px;
-  height: 0px;
-  margin-right: 0px;
+  width: 32px;
+  height: 32px;
+  margin-right: 25px;
   position: absolute;
   top: 20px;
   left: 20px;
@@ -255,32 +256,25 @@ article header .icon:before {
   width: 32px;
   text-align: center;
 }
-article header .published {
-  color: #ccc;
-  font-size: 10pt;
-}
 article header time {
-  color: #888;
+  color: #999;
   font: 0.9em "Lato", Helvetica Neue, Helvetica, Arial, sans-serif;
   margin-bottom: 5px;
-  display: inline;
+  display: block;
   line-height: 1;
-  text-decoration: none;
 }
 article header .title {
-  font-weight: bold;
-  margin-bottom: 5px;
+  font-weight: normal;
 }
 article header .title a {
   color: #444;
 }
 article header .title a:hover {
   color: #258fb8;
-  text-decoration: underline;
+  text-decoration: none;
 }
 article .entry {
   text-align: justify;
-  padding-left: 20px;
   line-height: 1.6;
 }
 article .entry p,
@@ -321,12 +315,6 @@ article .entry blockquote footer cite:before {
 article .entry code,
 article .entry pre {
   font-family: Monaco, Menlo, Consolas, Courier New, monospace;
-}
-@media screen and (max-width: 600px) {
-  article .entry code,
-  article .entry pre {
-    word-break: break-word;
-  }
 }
 article .entry code {
   background: #eee;
@@ -436,17 +424,14 @@ article .entry .pullquote {
   font-size: 1.5em;
 }
 article footer {
-  margin-top: 0px;
-  padding-top: 0px;
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #ddd;
   color: #999;
   font-size: 0.9em;
   line-height: 16px;
   position: relative;
   min-height: 16px;
-}
-article footer #readmore {
-  margin-top: 15px;
-  margin-bottom: 15px;
 }
 article footer a {
   color: #999;
@@ -494,19 +479,15 @@ article footer .addthis iframe {
   margin-top: 0;
 }
 #comment {
+  padding: 20px;
   background: #fff;
+  -webkit-box-shadow: 1px 2px 3px #ddd;
+  box-shadow: 1px 2px 3px #ddd;
   margin-bottom: 50px;
 }
 #comment .title {
   font-weight: normal;
   margin-bottom: 15px;
-}
-#content {
-  margin: 20px;
-  margin-left: auto;
-  margin-right: auto;
-  width: 900px;
-  max-width: 100%;
 }
 #pagination a {
   display: block;
@@ -658,12 +639,8 @@ article footer .addthis iframe {
   display: inline-block;
 }
 #footer {
-  width: 900px;
   color: #999;
-  margin-top: 15px;
   margin-bottom: 50px;
-  margin-left: auto;
-  margin-right: auto;
   font: 0.9em/1.6 "Lato", Helvetica Neue, Helvetica, Arial, sans-serif;
   text-shadow: 0 0 1px #fff;
 }
