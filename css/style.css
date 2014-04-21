@@ -1,4 +1,3 @@
-@import url("//fonts.googleapis.com/css?family=Lato:400,400italic");
 @font-face {
   font-family: 'FontAwesome';
   font-style: normal;
@@ -10,7 +9,7 @@
   padding: 0;
 }
 body {
-  background: #fff;
+  background: #f3f3f3;
   color: #444;
   font-family: "Helvetica Neue", "Helvetica", Arial, sans-serif;
   font-size: 14px;
@@ -104,6 +103,10 @@ a:hover {
 #header {
   text-shadow: 0 0 1px #fff;
   margin: 50px auto;
+  margin-left: auto;
+  margin-right: auto;
+  width: 900px;
+  max-width: 100%;
 }
 #header a {
   color: #258fb8;
@@ -264,7 +267,8 @@ article header time {
   line-height: 1;
 }
 article header .title {
-  font-weight: normal;
+  font-weight: bold;
+  margin-bottom: 5px;
 }
 article header .title a {
   color: #444;
@@ -639,8 +643,12 @@ article footer .addthis iframe {
   display: inline-block;
 }
 #footer {
+  width: 900px;
   color: #999;
+  margin-top: 15px;
   margin-bottom: 50px;
+  margin-left: auto;
+  margin-right: auto;
   font: 0.9em/1.6 "Lato", Helvetica Neue, Helvetica, Arial, sans-serif;
   text-shadow: 0 0 1px #fff;
 }
