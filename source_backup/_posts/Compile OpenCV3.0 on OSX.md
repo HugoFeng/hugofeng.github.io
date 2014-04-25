@@ -47,8 +47,11 @@ $ make install
 
 There're generally 2 ways to check OpenCV's version. 
 
-1. In the OpenCV source folder. modules/core/include/opencv2/core/version.hpp 
-2. After `make install`, you can see the copied libraries, they are usually named with version numbers. Like "libopencv_core.3.0.0.dylib".
+1. In the OpenCV source folder, version number is defined in file:
+    
+        modules/core/include/opencv2/core/version.hpp 
+    
+2. After `make install`, you can see the copied libraries, they are usually named with version numbers. Like `libopencv_core.3.0.0.dylib`.
 
 Also, you can use `pkg-config` to check if the libs are correctly located.
 {% codeblock lang:shell %}

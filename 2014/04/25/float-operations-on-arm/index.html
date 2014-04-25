@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   
-  <title>Archives: 2014 | Flight log</title>
+  <title>Floating point operations on ARM processor | Flight log</title>
   <meta name="author" content="Hugo Feng">
   
   <meta name="description" content="About code, machine learning, and life">
@@ -11,7 +11,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
-  
+  <meta property="og:title" content="Floating point operations on ARM processor"/>
   <meta property="og:site_name" content="Flight log"/>
 
   
@@ -77,13 +77,7 @@
 
     <div class="row">
         <!--Body content-->
-		
-
-<h2 class="archive-head">2014</h3>
-
-
-    
-        <article class="post">
+		<article class="post">
   
     <div class="gallery">
   <div class="photoset">
@@ -101,7 +95,7 @@
     <div class="header">
       
   
-    <h2 class="title_link"><a href="/2014/04/25/float-operations-on-arm/">Floating point operations on ARM processor</a>
+    <h2 class="title">Floating point operations on ARM processor
         <small>
             <time datetime="2014-04-25T19:32:34.000Z">Apr 25 2014</time>
         </small>
@@ -172,184 +166,19 @@
     </div>
 
 	
-		
-	
 
 	<hr/>
 
 	
-  </div>
-</article>
-
-
-
-    
-        <article class="post">
-  
-    <div class="gallery">
-  <div class="photoset">
-    
-      <img src="">
-    
-  </div>
-  <div class="control">
-    <div class="prev"></div>
-    <div class="next"></div>
-  </div>
-</div>
-  
-  <div class="post-content">
-    <div class="header">
-      
-  
-    <h2 class="title_link"><a href="/2014/04/17/shell-script-for-hexo-source-folder-backup/">Shell Script for Hexo source folder backup</a>
-        <small>
-            <time datetime="2014-04-17T18:45:20.000Z">Apr 17 2014</time>
-        </small>
-    </h2>
-  
-
-
-    </div>
-
-    <div class="entry">
-      
-        <p><a href="http://hexo.io" target="_blank">Hexo</a> is a very good tool to generate blog pages from mardown files, and it is more comvinient together with Github. But everytime I deploy a new post to Github using <code>hexo deploy</code>, it only commits generated .html files to the repo. </p>
-<p>Those original <code>.md</code> articles however seems very important to me for revising contents in the future, and it would be troublesome if those <code>.md</code> files were somehow lost. </p>
-<p>In order to keep them save and track my every changes, I decide to find a way to put them altogether in the repo with the deployed .html files. So I wrote a shell script the achieve this.</p>
-
-      
-    </div>
-
-	
-		
-			<a href="/2014/04/17/shell-script-for-hexo-source-folder-backup/#more" class="more-link">Read More</a>
-		
-	
-
-	<hr/>
-
+		<nav id="pagination">
+			
+			
+				<a href="/2014/04/17/shell-script-for-hexo-source-folder-backup/" class="alignright next" title="Shell Script for Hexo source folder backup">Shell Script for Hexo source folder backup</a>
+			
+		</nav>
 	
   </div>
 </article>
-
-
-
-    
-        <article class="post">
-  
-    <div class="gallery">
-  <div class="photoset">
-    
-      <img src="">
-    
-  </div>
-  <div class="control">
-    <div class="prev"></div>
-    <div class="next"></div>
-  </div>
-</div>
-  
-  <div class="post-content">
-    <div class="header">
-      
-  
-    <h2 class="title_link"><a href="/2014/04/17/Compile OpenCV3.0 on OSX/">Compile OpenCV 3.0 on OSX</a>
-        <small>
-            <time datetime="2014-04-17T15:37:43.000Z">Apr 17 2014</time>
-        </small>
-    </h2>
-  
-
-
-    </div>
-
-    <div class="entry">
-      
-        <h2 id="Install">Install</h2>
-<p>Installing OpenCV on Mac can be fairly simple—using <code>homebrew</code>, however, <code>homebrew</code> can only install a stable version of it(currently 2.4.8.2). If you want to have a taste of OpenCV3.0, you’ll have to build from the source. This sometimes can be very annoying[1][2]. After more than a day’s struggle, I find a solution for my machine.</p>
-<p>If you have anaconda installed, probably the vtk module has a version of 5.x, but OpenCV3.0 need vtk at least 6.1.[1]</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre><span class="variable">$ </span>brew install vtk   <span class="comment"># This gonna take some time</span>
-</pre></td></tr></table></figure>
-
-
-<p>Now download the latest OpenCV source:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre><span class="variable">$ </span>git clone git<span class="variable">@github</span>.<span class="symbol">com:</span><span class="constant">Itseez</span>/opencv.git
-</pre></td></tr></table></figure>
-
-
-<p>Go to OpenCV source folder, </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-2
-3
-</pre></td><td class="code"><pre><span class="variable">$ </span>mkdir build
-<span class="variable">$ </span>cd build
-<span class="variable">$ </span>cmake <span class="string">"Unix Makefile"</span> -<span class="constant">D</span> <span class="constant">CMAKE_OSX_ARCHITECTURES</span>=x86_64 -<span class="constant">D</span> <span class="constant">BUILD_PERF_TESTS</span>=<span class="constant">OFF</span> ..
-</pre></td></tr></table></figure>
-
-
-<p>Since OpenCV module ‘viz’ has to be compiled with libc++ instead of libstdc++, we need to make some changes to the makefiles to ensure it is compiled that way.</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-2
-</pre></td><td class="code"><pre><span class="variable">$ </span>cd modules/viz/<span class="constant">CMakeFiles</span>/opencv_viz.dir/
-<span class="variable">$ </span>vim flags.make
-</pre></td></tr></table></figure>
-
-
-<p>Add flag <code>-std=c++11 -stdlib=libc++</code><br>Do the same to build/modules/viz/CMakeFiles/opencv_test_viz.dir/flags.make<br>Now back to the build folder. </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre><span class="variable">$ </span>make -j8  <span class="comment"># Using 8 threads to build</span>
-</pre></td></tr></table></figure>
-
-
-<p>And it should work fine.<br>Now finish up:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre><span class="variable">$ </span>make install
-</pre></td></tr></table></figure>
-
-
-<h2 id="Check">Check</h2>
-<p>There’re generally 2 ways to check OpenCV’s version. </p>
-<ol>
-<li><p>In the OpenCV source folder, version number is defined in file:</p>
-<pre><code> modules/core/<span class="built_in">include</span>/opencv2/core/<span class="built_in">version</span>.hpp 
-</code></pre></li>
-<li><p>After <code>make install</code>, you can see the copied libraries, they are usually named with version numbers. Like <code>libopencv_core.3.0.0.dylib</code>.</p>
-</li>
-</ol>
-<p>Also, you can use <code>pkg-config</code> to check if the libs are correctly located.</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre><span class="variable">$pkg</span><span class="attribute">-config</span> <span class="subst">--</span>libs opencv
-</pre></td></tr></table></figure>
-
-
-<p>The output will look like this:</p>
-<pre><code>/usr/<span class="built_in">local</span>/lib/libopencv_calib3d.dylib /usr/<span class="built_in">local</span>/lib/libopencv_contrib.dylib /usr/<span class="built_in">local</span>/lib/libopencv_core.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cuda.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudaarithm.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudabgsegm.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudafeatures2d.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudafilters.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudaimgproc.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudaoptflow.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudastereo.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudawarping.dylib /usr/<span class="built_in">local</span>/lib/libopencv_features2d.dylib /usr/<span class="built_in">local</span>/lib/libopencv_flann.dylib /usr/<span class="built_in">local</span>/lib/libopencv_highgui.dylib /usr/<span class="built_in">local</span>/lib/libopencv_imgproc.dylib /usr/<span class="built_in">local</span>/lib/libopencv_legacy.dylib /usr/<span class="built_in">local</span>/lib/libopencv_ml.dylib /usr/<span class="built_in">local</span>/lib/libopencv_nonfree.dylib /usr/<span class="built_in">local</span>/lib/libopencv_objdetect.dylib /usr/<span class="built_in">local</span>/lib/libopencv_optim.dylib /usr/<span class="built_in">local</span>/lib/libopencv_photo.dylib /usr/<span class="built_in">local</span>/lib/libopencv_shape.dylib /usr/<span class="built_in">local</span>/lib/libopencv_softcascade.dylib /usr/<span class="built_in">local</span>/lib/libopencv_stitching.dylib /usr/<span class="built_in">local</span>/lib/libopencv_superres.dylib /usr/<span class="built_in">local</span>/lib/libopencv_ts.<span class="operator">a</span> /usr/<span class="built_in">local</span>/lib/libopencv_video.dylib /usr/<span class="built_in">local</span>/lib/libopencv_videostab.dylib /usr/<span class="built_in">local</span>/lib/libopencv_viz.dylib
-</code></pre><p>ref:<br>[1] <a href="http://code.opencv.org/issues/3582" target="_blank">http://code.opencv.org/issues/3582</a><br>[2] <a href="http://stackoverflow.com/questions/19671827/opencv-installation-on-mac-os-x" target="_blank">http://stackoverflow.com/questions/19671827/opencv-installation-on-mac-os-x</a><br>[3] <a href="http://ibivanchev.blogspot.be/2013/10/opencv-mac-os-x-109.html" target="_blank">http://ibivanchev.blogspot.be/2013/10/opencv-mac-os-x-109.html</a></p>
-
-      
-    </div>
-
-	
-		
-	
-
-	<hr/>
-
-	
-  </div>
-</article>
-
-
-
-    
-    <nav id="pagination">
-  
-  
-  <div class="clearfix"></div>
-</nav>
 
 
 
