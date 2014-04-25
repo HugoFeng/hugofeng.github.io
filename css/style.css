@@ -190,6 +190,8 @@ article .entry iframe,
 article .entry .video-container {
   margin-top: 10px;
 }
+article .entry h1,
+article .entry h2,
 article .entry h3,
 article .entry h4,
 article .entry h5,
@@ -257,7 +259,7 @@ article .entry h3,
 article .entry h4,
 article .entry h5,
 article .entry h6 {
-  font-weight: normal;
+  font-weight: bold;
 }
 article .entry img,
 article .entry video {
