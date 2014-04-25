@@ -145,7 +145,7 @@ article .gallery .next:before {
 }
 article .header {
   border-left: 3px solid #999;
-  margin: 20px 0 10px;
+  margin: 25px 0 20px;
   padding: 0 0 0 13px;
   text-align: left;
 }
@@ -170,7 +170,7 @@ article .header .title_link {
   font-weight: bold;
 }
 article .header .title_link a {
-  color: #258fb8;
+  color: #444;
 }
 article .header .title_link a:hover {
   color: #258fb8;
@@ -187,21 +187,20 @@ article .entry ol,
 article .entry dl,
 article .entry table,
 article .entry iframe,
-article .entry h3,
-article .entry h4,
-article .entry h5,
-article .entry h6,
 article .entry .video-container {
   margin-top: 10px;
 }
+article .entry h3,
+article .entry h4,
+article .entry h5,
+article .entry h6 {
+  margin-top: 25px;
+  margin-bottom: 20px;
+}
 article .entry blockquote {
-  border-top: 1px solid #ddd;
-  border-bottom: 1px solid #ddd;
-  font-style: italic;
-  font-family: "Georgia", serif;
-  font-size: 1.2em;
+  font-size: 14px;
+  color: #777;
   padding: 0 30px 15px;
-  text-align: center;
 }
 article .entry blockquote footer {
   border-top: none;
