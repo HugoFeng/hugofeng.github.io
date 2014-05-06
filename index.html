@@ -57,9 +57,9 @@
 						<li><a href="/about">About</a></li>
                     
 
-					<!--%- partial('post/blogroll') %> 
+					<!--%- partial('post/blogroll') %--> 
 
-                    <li> <a href="/atom.xml">Rss</a> </li-->
+                    <li> <a href="/atom.xml">Rss</a> </li>
                 </ol>
             </div>
         </li>
@@ -68,7 +68,7 @@
     <h1>
         <a href="/">Flight log</a> 
     </h1>
-    <h5 class="text-muted"> Part of Hugo&#39;s life.  </h5>
+    <h5 class="text-muted"> About code, machine learning and part of Hugo&#39;s life.  </h5>
 </div>
 
     </div>
@@ -122,51 +122,13 @@
 </ol>
 <h3 id="3-_Hard-float">3. Hard-float</h3>
 <p>Nowadays, many chips has hardware <code>FPU</code> support to accelerate fp operations, for ARM familis, this unit is often called <code>VFP</code> (Vector Floating-Point coprocessor). VFP is a fully IEEE-754 compatible floating point unit. But later a much more powerful NEON Advanced SIMD unit was introduced and is suggested instead of VFP by Architecture Reference Manual.</p>
-<h4 id="3-1_VFP">3.1 VFP</h4>
-<p>One of the nice feature VFP provides is that it supports single and double-precision arithmetic on vector-vector, vector-scalar, and scalar-scalar data sets where vectors can consist of up to 8 single-precision, or 4 double-precision elements [4]. The “vector mode” instructions of VFP is actually sequential, so the speed up is very limited [8]. There’s one thing worth mentioning, that the “vector mode” of VFP is actually deprecated, replaced shortly after its introduce, with the much more powerful NEON Advanced SIMD unit [9]. </p>
-<p>To use VFP, one need to pass flag <code>-mfloat-abi=softfp</code> or <code>-mfloat-abi=hard</code> to gcc when compiling.</p>
-<h5 id="3-1-1_Difference_between_softfp_and_hard_mode">3.1.1 Difference between <code>softfp</code> and <code>hard</code> mode</h5>
-<ul>
-<li><p>For <code>softfp</code> mode:<br>Using general integer registers to pass values (like the <code>soft</code> mode). It also support linking to <code>soft</code> mode compiled binaris. </p>
-</li>
-<li><p>For <code>hard</code> mode:<br>Using floating point registers on FPU to pass values. Doesn’t support linking to <code>soft</code> mode binaris. All codes must be compiled in <code>hard</code> mode. It saves up to 20 cycles when calling a function with fp arguments, therefore faster than <code>softfp</code> mode [6].</p>
-</li>
-</ul>
-<p>Nowadays, ARM Linux is set to <code>hard</code> mode by default [3] while Debian Armel set <code>softfp</code> as default [7]. And these two modes are not compatible in one application due to different value passing conventions. </p>
-<p>Besides, <code>-msoft-float</code> equals to <code>-mfloat-abi=soft</code>, so as <code>-mhard-float</code> to <code>-mfloat-abi=hard</code> [8].</p>
-<h4 id="3-2_New_era,_with_Neon">3.2 New era, with Neon</h4>
-<p>The Advanced SIMD extension (aka NEON or “MPE” Media Processing Engine) is a combined 64- and 128-bit SIMD instruction set that provides standardized acceleration for media and signal processing applications. NEON is included in all Cortex-A8 devices but is optional in Cortex-A9 devices [9]. </p>
-<p>Neon shares the same floating point registers with VFP, and thanks to floating point pipeline technology that Neon supports, it is a lot faster than VFP, but the draw back is that the NEON floating point pipeline is not entirely IEEE-754 compliant[10]. </p>
-<p>Following is quoted from Peter on <a href="http://stackoverflow.com/questions/4097034/arm-cortex-a8-whats-the-difference-between-vfp-and-neon" target="_blank">StackOverflow</a>. He’s got a good introduction on this.</p>
-<blockquote>
-<p>Because it is not IEEE-754 compliant, a compiler cannot generate these instructions unless you tell the compiler that you are not interested in full compliance. This can be done in several ways.</p>
-<ol>
-<li><p>Using an intrinsic function to force NEON usage, for example see the <a href="http://gcc.gnu.org/onlinedocs/gcc/ARM-NEON-Intrinsics.html" target="_blank">GCC Neon Intrinsic Function List</a>.</p>
-</li>
-<li><p>Ask the compiler, very nicely. Even newer GCC versions with <code>-mfpu=neon</code> will not generate floating point NEON instructions unless you also specify <code>-funsafe-math-optimizations</code>.</p>
-</li>
-</ol>
-</blockquote>
-<h3 id="4-_Conclusion">4. Conclusion</h3>
-<p>ARM chips is not specifically designed for floating point operations, but with the help of coprocessors, the speed of these expensive operations can be greatly improved.</p>
-<h3 id="5-_Reference">5. Reference</h3>
-<ul>
-<li>[1] <a href="http://www.nslu2-linux.org/wiki/FAQ/SoftHardFloatCompiler" target="_blank">http://www.nslu2-linux.org/wiki/FAQ/SoftHardFloatCompiler</a></li>
-<li>[2] <a href="http://lwn.net/Articles/546840/" target="_blank">http://lwn.net/Articles/546840/</a></li>
-<li>[3] <a href="http://linux-7110.sourceforge.net/howtos/netbook_new/x1114.htm" target="_blank">http://linux-7110.sourceforge.net/howtos/netbook_new/x1114.htm</a></li>
-<li>[4] <a href="http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0301h/Cegdejjh.html" target="_blank">http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0301h/Cegdejjh.html</a></li>
-<li>[5] <a href="http://www.gurucoding.com/en/rpi_cross_compiler/diff_hardfp_softfp.php" target="_blank">http://www.gurucoding.com/en/rpi_cross_compiler/diff_hardfp_softfp.php</a></li>
-<li>[6] <a href="https://community.freescale.com/thread/219966" target="_blank">https://community.freescale.com/thread/219966</a></li>
-<li>[7] <a href="https://wiki.debian.org/ArmEabiPort" target="_blank">https://wiki.debian.org/ArmEabiPort</a></li>
-<li>[8] <a href="http://gcc.gnu.org/onlinedocs/gcc-4.1.1/gcc/ARM-Options.html#ARM-Options" target="_blank">http://gcc.gnu.org/onlinedocs/gcc-4.1.1/gcc/ARM-Options.html#ARM-Options</a></li>
-<li>[9] <a href="http://en.wikipedia.org/wiki/ARM_architecture" target="_blank">http://en.wikipedia.org/wiki/ARM_architecture</a></li>
-<li>[10] <a href="http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0204h/Bcfhfbga.html" target="_blank">http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0204h/Bcfhfbga.html</a></li>
-</ul>
 
       
     </div>
 
 	
+		
+			<a href="/2014/04/25/float-operations-on-arm/#more" class="more-link">Read More</a>
 		
 	
 
@@ -293,7 +255,7 @@
 </pre></td></tr></table></figure>
 
 
-<p>Add flag <code>-std=c++11 -stdlib=libc++</code><br>Do the same to build/modules/viz/CMakeFiles/opencv_test_viz.dir/flags.make<br>Now back to the build folder. </p>
+<p>Add flag <code>-std=c++11 -stdlib=libc++</code><br>Do the same to <code>build/modules/viz/CMakeFiles/opencv_test_viz.dir/flags.make</code><br>Now back to the build folder. </p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre>1
 </pre></td><td class="code"><pre><span class="variable">$ </span>make -j8  <span class="comment"># Using 8 threads to build</span>
 </pre></td></tr></table></figure>

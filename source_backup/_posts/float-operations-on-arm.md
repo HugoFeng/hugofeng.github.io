@@ -23,6 +23,8 @@ There are 2 different ways to do floating point operations without FPU:
 
 Nowadays, many chips has hardware `FPU` support to accelerate fp operations, for ARM familis, this unit is often called `VFP` (Vector Floating-Point coprocessor). VFP is a fully IEEE-754 compatible floating point unit. But later a much more powerful NEON Advanced SIMD unit was introduced and is suggested instead of VFP by Architecture Reference Manual.
 
+<!--more-->
+
 #### 3.1 VFP
 One of the nice feature VFP provides is that it supports single and double-precision arithmetic on vector-vector, vector-scalar, and scalar-scalar data sets where vectors can consist of up to 8 single-precision, or 4 double-precision elements [4]. The "vector mode" instructions of VFP is actually sequential, so the speed up is very limited [8]. There's one thing worth mentioning, that the "vector mode" of VFP is actually deprecated, replaced shortly after its introduce, with the much more powerful NEON Advanced SIMD unit [9]. 
 

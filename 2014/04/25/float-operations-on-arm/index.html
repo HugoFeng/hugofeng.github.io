@@ -57,9 +57,9 @@
 						<li><a href="/about">About</a></li>
                     
 
-					<!--%- partial('post/blogroll') %> 
+					<!--%- partial('post/blogroll') %--> 
 
-                    <li> <a href="/atom.xml">Rss</a> </li-->
+                    <li> <a href="/atom.xml">Rss</a> </li>
                 </ol>
             </div>
         </li>
@@ -68,7 +68,7 @@
     <h1>
         <a href="/">Flight log</a> 
     </h1>
-    <h5 class="text-muted"> Part of Hugo&#39;s life.  </h5>
+    <h5 class="text-muted"> About code, machine learning and part of Hugo&#39;s life.  </h5>
 </div>
 
     </div>
@@ -121,6 +121,8 @@
 </ol>
 <h3 id="3-_Hard-float">3. Hard-float</h3>
 <p>Nowadays, many chips has hardware <code>FPU</code> support to accelerate fp operations, for ARM familis, this unit is often called <code>VFP</code> (Vector Floating-Point coprocessor). VFP is a fully IEEE-754 compatible floating point unit. But later a much more powerful NEON Advanced SIMD unit was introduced and is suggested instead of VFP by Architecture Reference Manual.</p>
+<a id="more"></a>
+
 <h4 id="3-1_VFP">3.1 VFP</h4>
 <p>One of the nice feature VFP provides is that it supports single and double-precision arithmetic on vector-vector, vector-scalar, and scalar-scalar data sets where vectors can consist of up to 8 single-precision, or 4 double-precision elements [4]. The “vector mode” instructions of VFP is actually sequential, so the speed up is very limited [8]. There’s one thing worth mentioning, that the “vector mode” of VFP is actually deprecated, replaced shortly after its introduce, with the much more powerful NEON Advanced SIMD unit [9]. </p>
 <p>To use VFP, one need to pass flag <code>-mfloat-abi=softfp</code> or <code>-mfloat-abi=hard</code> to gcc when compiling.</p>

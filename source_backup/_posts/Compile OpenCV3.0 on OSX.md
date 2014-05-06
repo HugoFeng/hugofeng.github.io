@@ -31,7 +31,7 @@ $ vim flags.make
 {% endcodeblock %}
 
 Add flag `-std=c++11 -stdlib=libc++`
-Do the same to build/modules/viz/CMakeFiles/opencv_test_viz.dir/flags.make
+Do the same to `build/modules/viz/CMakeFiles/opencv_test_viz.dir/flags.make`
 Now back to the build folder. 
 {% codeblock lang:shell %}
 $ make -j8  # Using 8 threads to build
