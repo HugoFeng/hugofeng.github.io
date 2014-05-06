@@ -114,9 +114,9 @@
     <div class="entry">
       
         <p>This article is a brief introduction of different implementations of floating point operation on an ARM processor.</p>
-<h3 id="Early_ages">Early ages</h3>
+<h3 id="1-_Early_ages">1. Early ages</h3>
 <p>There’s no coprocessor for floating point operations on ARM, those operations are done by CPU, means of which is called <code>Float Math Emulation</code>. Normally each float point operation costs thousands of cycles, which is very inefficient. </p>
-<h3 id="Soft-float">Soft-float</h3>
+<h3 id="2-_Soft-float">2. Soft-float</h3>
 <p>This is for those situations where the CPU does not contain a <code>floating point unit(FPU)</code>, which is a built-in coprocessor on CPU to deal with floating point operations. </p>
 <p>There are 2 different ways to do floating point operations without FPU: </p>
 <ol>
@@ -125,12 +125,12 @@
 <li><p>All floating point operations are translated to specific inline function calls by compiler. This is done by passing flag <code>-mfloat-abi=soft</code> when using <code>gcc</code>, and gcc will use built in software(library) to emulate.</p>
 </li>
 </ol>
-<h3 id="Hard-float">Hard-float</h3>
+<h3 id="3-_Hard-float">3. Hard-float</h3>
 <p>Nowadays, many chips has hardware <code>FPU</code> support to accelerate fp operations, for ARM familis, this unit is often called <code>VFP</code> (Vector Floating-Point coprocessor). VFP is a fully IEEE-754 compatible floating point unit. But later a much more powerful NEON Advanced SIMD unit was introduced and is suggested instead of VFP by Architecture Reference Manual.</p>
-<h4 id="VFP">VFP</h4>
+<h4 id="3-1_VFP">3.1 VFP</h4>
 <p>One of the nice feature VFP provides is that it supports single and double-precision arithmetic on vector-vector, vector-scalar, and scalar-scalar data sets where vectors can consist of up to 8 single-precision, or 4 double-precision elements [4]. The “vector mode” instructions of VFP is actually sequential, so the speed up is very limited [8]. There’s one thing worth mentioning, that the “vector mode” of VFP is actually deprecated, replaced shortly after its introduce, with the much more powerful NEON Advanced SIMD unit [9]. </p>
 <p>To use VFP, one need to pass flag <code>-mfloat-abi=softfp</code> or <code>-mfloat-abi=hard</code> to gcc when compiling.</p>
-<h5 id="Difference_between_softfp_and_hard_mode">Difference between <code>softfp</code> and <code>hard</code> mode</h5>
+<h5 id="3-1-1_Difference_between_softfp_and_hard_mode">3.1.1 Difference between <code>softfp</code> and <code>hard</code> mode</h5>
 <ul>
 <li><p>For <code>softfp</code> mode:<br>Using general integer registers to pass values (like the <code>soft</code> mode). It also support linking to <code>soft</code> mode compiled binaris. </p>
 </li>
@@ -139,7 +139,7 @@
 </ul>
 <p>Nowadays, ARM Linux is set to <code>hard</code> mode by default [3] while Debian Armel set <code>softfp</code> as default [7]. And these two modes are not compatible in one application due to different value passing conventions. </p>
 <p>Besides, <code>-msoft-float</code> equals to <code>-mfloat-abi=soft</code>, so as <code>-mhard-float</code> to <code>-mfloat-abi=hard</code> [8].</p>
-<h4 id="New_era,_with_Neon">New era, with Neon</h4>
+<h4 id="3-2_New_era,_with_Neon">3.2 New era, with Neon</h4>
 <p>The Advanced SIMD extension (aka NEON or “MPE” Media Processing Engine) is a combined 64- and 128-bit SIMD instruction set that provides standardized acceleration for media and signal processing applications. NEON is included in all Cortex-A8 devices but is optional in Cortex-A9 devices [9]. </p>
 <p>Neon shares the same floating point registers with VFP, and thanks to floating point pipeline technology that Neon supports, it is a lot faster than VFP, but the draw back is that the NEON floating point pipeline is not entirely IEEE-754 compliant[10]. </p>
 <p>Following is quoted from Peter on <a href="http://stackoverflow.com/questions/4097034/arm-cortex-a8-whats-the-difference-between-vfp-and-neon" target="_blank">StackOverflow</a>. He’s got a good introduction on this.</p>
@@ -152,9 +152,9 @@
 </li>
 </ol>
 </blockquote>
-<h3 id="Conclusion">Conclusion</h3>
+<h3 id="4-_Conclusion">4. Conclusion</h3>
 <p>ARM chips is not specifically designed for floating point operations, but with the help of coprocessors, the speed of these expensive operations can be greatly improved.</p>
-<h3 id="Reference">Reference</h3>
+<h3 id="5-_Reference">5. Reference</h3>
 <ul>
 <li>[1] <a href="http://www.nslu2-linux.org/wiki/FAQ/SoftHardFloatCompiler" target="_blank">http://www.nslu2-linux.org/wiki/FAQ/SoftHardFloatCompiler</a></li>
 <li>[2] <a href="http://lwn.net/Articles/546840/" target="_blank">http://lwn.net/Articles/546840/</a></li>
@@ -266,7 +266,7 @@
 
     <div class="entry">
       
-        <h2 id="Install">Install</h2>
+        <h3 id="1-_Install">1. Install</h3>
 <p>Installing OpenCV on Mac can be fairly simple—using <code>homebrew</code>, however, <code>homebrew</code> can only install a stable version of it(currently 2.4.8.2). If you want to have a taste of OpenCV3.0, you’ll have to build from the source. This sometimes can be very annoying[1][2]. After more than a day’s struggle, I find a solution for my machine.</p>
 <p>If you have anaconda installed, probably the vtk module has a version of 5.x, but OpenCV3.0 need vtk at least 6.1.[1]</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre>1
@@ -310,7 +310,7 @@
 </pre></td></tr></table></figure>
 
 
-<h2 id="Check">Check</h2>
+<h3 id="2-_Check">2. Check</h3>
 <p>There’re generally 2 ways to check OpenCV’s version. </p>
 <ol>
 <li><p>In the OpenCV source folder, version number is defined in file:</p>
@@ -327,7 +327,8 @@
 
 <p>The output will look like this:</p>
 <pre><code>/usr/<span class="built_in">local</span>/lib/libopencv_calib3d.dylib /usr/<span class="built_in">local</span>/lib/libopencv_contrib.dylib /usr/<span class="built_in">local</span>/lib/libopencv_core.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cuda.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudaarithm.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudabgsegm.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudafeatures2d.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudafilters.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudaimgproc.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudaoptflow.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudastereo.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudawarping.dylib /usr/<span class="built_in">local</span>/lib/libopencv_features2d.dylib /usr/<span class="built_in">local</span>/lib/libopencv_flann.dylib /usr/<span class="built_in">local</span>/lib/libopencv_highgui.dylib /usr/<span class="built_in">local</span>/lib/libopencv_imgproc.dylib /usr/<span class="built_in">local</span>/lib/libopencv_legacy.dylib /usr/<span class="built_in">local</span>/lib/libopencv_ml.dylib /usr/<span class="built_in">local</span>/lib/libopencv_nonfree.dylib /usr/<span class="built_in">local</span>/lib/libopencv_objdetect.dylib /usr/<span class="built_in">local</span>/lib/libopencv_optim.dylib /usr/<span class="built_in">local</span>/lib/libopencv_photo.dylib /usr/<span class="built_in">local</span>/lib/libopencv_shape.dylib /usr/<span class="built_in">local</span>/lib/libopencv_softcascade.dylib /usr/<span class="built_in">local</span>/lib/libopencv_stitching.dylib /usr/<span class="built_in">local</span>/lib/libopencv_superres.dylib /usr/<span class="built_in">local</span>/lib/libopencv_ts.<span class="operator">a</span> /usr/<span class="built_in">local</span>/lib/libopencv_video.dylib /usr/<span class="built_in">local</span>/lib/libopencv_videostab.dylib /usr/<span class="built_in">local</span>/lib/libopencv_viz.dylib
-</code></pre><p>ref:<br>[1] <a href="http://code.opencv.org/issues/3582" target="_blank">http://code.opencv.org/issues/3582</a><br>[2] <a href="http://stackoverflow.com/questions/19671827/opencv-installation-on-mac-os-x" target="_blank">http://stackoverflow.com/questions/19671827/opencv-installation-on-mac-os-x</a><br>[3] <a href="http://ibivanchev.blogspot.be/2013/10/opencv-mac-os-x-109.html" target="_blank">http://ibivanchev.blogspot.be/2013/10/opencv-mac-os-x-109.html</a></p>
+</code></pre><h3 id="3-_Reference:">3. Reference:</h3>
+<p>[1] <a href="http://code.opencv.org/issues/3582" target="_blank">http://code.opencv.org/issues/3582</a><br>[2] <a href="http://stackoverflow.com/questions/19671827/opencv-installation-on-mac-os-x" target="_blank">http://stackoverflow.com/questions/19671827/opencv-installation-on-mac-os-x</a><br>[3] <a href="http://ibivanchev.blogspot.be/2013/10/opencv-mac-os-x-109.html" target="_blank">http://ibivanchev.blogspot.be/2013/10/opencv-mac-os-x-109.html</a></p>
 
       
     </div>
@@ -360,7 +361,7 @@
   
 	  2014 &copy; Hugo Feng,
   
-  All rights reserved. Powered by <a href="http://zespia.tw/hexo/" title="Hexo">Hexo</a>.
+  All rights reserved. Powered by <a href="http://zespia.tw/hexo/" title="Hexo">Hexo</a>. Hosted on <a href="https://github.com/HugoFeng/hugofeng.github.io" title="GitHub">GitHub</a>.
 </div>
 <div class="clearfix"></div>
 

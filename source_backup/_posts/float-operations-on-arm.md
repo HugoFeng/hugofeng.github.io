@@ -5,11 +5,11 @@ tags: embedded
 
 This article is a brief introduction of different implementations of floating point operation on an ARM processor.
 
-### Early ages
+### 1. Early ages
 
 There's no coprocessor for floating point operations on ARM, those operations are done by CPU, means of which is called `Float Math Emulation`. Normally each float point operation costs thousands of cycles, which is very inefficient. 
 
-### Soft-float
+### 2. Soft-float
 
 This is for those situations where the CPU does not contain a `floating point unit(FPU)`, which is a built-in coprocessor on CPU to deal with floating point operations. 
 
@@ -19,16 +19,16 @@ There are 2 different ways to do floating point operations without FPU:
 
 2. All floating point operations are translated to specific inline function calls by compiler. This is done by passing flag `-mfloat-abi=soft` when using `gcc`, and gcc will use built in software(library) to emulate.
 
-### Hard-float
+### 3. Hard-float
 
 Nowadays, many chips has hardware `FPU` support to accelerate fp operations, for ARM familis, this unit is often called `VFP` (Vector Floating-Point coprocessor). VFP is a fully IEEE-754 compatible floating point unit. But later a much more powerful NEON Advanced SIMD unit was introduced and is suggested instead of VFP by Architecture Reference Manual.
 
-#### VFP
+#### 3.1 VFP
 One of the nice feature VFP provides is that it supports single and double-precision arithmetic on vector-vector, vector-scalar, and scalar-scalar data sets where vectors can consist of up to 8 single-precision, or 4 double-precision elements [4]. The "vector mode" instructions of VFP is actually sequential, so the speed up is very limited [8]. There's one thing worth mentioning, that the "vector mode" of VFP is actually deprecated, replaced shortly after its introduce, with the much more powerful NEON Advanced SIMD unit [9]. 
 
 To use VFP, one need to pass flag `-mfloat-abi=softfp` or `-mfloat-abi=hard` to gcc when compiling.
 
-##### Difference between `softfp` and `hard` mode
+##### 3.1.1 Difference between `softfp` and `hard` mode
 - For `softfp` mode:
 Using general integer registers to pass values (like the `soft` mode). It also support linking to `soft` mode compiled binaris. 
 
@@ -39,7 +39,7 @@ Nowadays, ARM Linux is set to `hard` mode by default [3] while Debian Armel set 
 
 Besides, `-msoft-float` equals to `-mfloat-abi=soft`, so as `-mhard-float` to `-mfloat-abi=hard` [8].
 
-#### New era, with Neon
+#### 3.2 New era, with Neon
 
 The Advanced SIMD extension (aka NEON or "MPE" Media Processing Engine) is a combined 64- and 128-bit SIMD instruction set that provides standardized acceleration for media and signal processing applications. NEON is included in all Cortex-A8 devices but is optional in Cortex-A9 devices [9]. 
 
@@ -53,13 +53,13 @@ Following is quoted from Peter on [StackOverflow](http://stackoverflow.com/quest
 > 
 > 2. Ask the compiler, very nicely. Even newer GCC versions with `-mfpu=neon` will not generate floating point NEON instructions unless you also specify `-funsafe-math-optimizations`.
 
-### Conclusion
+### 4. Conclusion
 
 ARM chips is not specifically designed for floating point operations, but with the help of coprocessors, the speed of these expensive operations can be greatly improved.
 
 
 
-### Reference
+### 5. Reference
 
 - [1] http://www.nslu2-linux.org/wiki/FAQ/SoftHardFloatCompiler
 - [2] http://lwn.net/Articles/546840/
