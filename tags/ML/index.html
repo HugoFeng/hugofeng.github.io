@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   
-  <title>Hugo Feng | Flight log</title>
+  <title>ML | Flight log</title>
   <meta name="author" content="Hugo Feng">
   
   <meta name="description" content="About code, machine learning, and life">
@@ -11,7 +11,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
-  <meta property="og:title" content="Hugo Feng"/>
+  
   <meta property="og:site_name" content="Flight log"/>
 
   
@@ -77,15 +77,33 @@
 
     <div class="row">
         <!--Body content-->
-		<article class="page">
+		
+
+<h2 class="archive-head tag">ML</h3>
+
+
+    
+        <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
   
   <div class="post-content">
     <div class="header">
       
   
-    <h2 class="title">Hugo Feng
+    <h2 class="title_link"><a href="/2014/06/05/bp_ann_in_matlab/">A implementation of Neural Network with Back Propagation in MATLAB</a>
         <small>
-            <time datetime="2014-04-17T15:53:00.000Z">Apr 17 2014</time>
+            <time datetime="2014-06-05T20:45:14.000Z">Jun 5 2014</time>
         </small>
     </h2>
   
@@ -95,11 +113,23 @@
 
     <div class="entry">
       
-        <p>I&#x2019;m currently a Master student at Vrije Universiteit Brussel studying Applied Computer Science. My current research interests are Machine learning and image recognition. You can contact me through email: hugo.fxy[#]gmail.com .</p>
+        <h3 id="Test_the_program_with_a_data_set">Test the program with a data set</h3>
+<ul>
+<li><strong>Network attributes</strong>: 1 hidden layer with 3 neurons, initial biases and weights are set to random from -1 to 1, with 0.5 learning rate</li>
+<li><strong>Target</strong>: XOR(x1, x2)</li>
+<li><strong>Training</strong> set: [x1, x2] = [0 0; 0 1; 1 0; 1 1], y = [0; 1; 1; 0]</li>
+<li><strong>Test set</strong>: (Same as training set),   error = (sum(errors .^ 2))^0.5</li>
+</ul>
+<h4 id="Output">Output</h4>
+<p><img src="/img/bp1.png" alt="Standard diviation of errors with iterations"><br><img src="/img/bp2.png" alt="Program output"><br><img src="/img/bp3.png" alt="Output of trained Neural Network"></p>
 
       
     </div>
 
+	
+		
+			<a href="/2014/06/05/bp_ann_in_matlab/#more" class="more-link">Read More</a>
+		
 	
 
 	<hr/>
@@ -107,6 +137,15 @@
 	
   </div>
 </article>
+
+
+
+    
+    <nav id="pagination">
+  
+  
+  <div class="clearfix"></div>
+</nav>
 
 
 

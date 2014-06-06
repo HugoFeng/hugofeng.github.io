@@ -107,7 +107,7 @@
 
     <div class="entry">
       
-        <p><a href="http://hexo.io" target="_blank">Hexo</a> is a very good tool to generate blog pages from mardown files, and it is more comvinient together with Github. But everytime I deploy a new post to Github using <code>hexo deploy</code>, it only commits generated .html files to the repo. </p>
+        <p><a href="http://hexo.io" target="_blank" rel="external">Hexo</a> is a very good tool to generate blog pages from mardown files, and it is more comvinient together with Github. But everytime I deploy a new post to Github using <code>hexo deploy</code>, it only commits generated .html files to the repo. </p>
 <p>Those original <code>.md</code> articles however seems very important to me for revising contents in the future, and it would be troublesome if those <code>.md</code> files were somehow lost. </p>
 <p>In order to keep them save and track my every changes, I decide to find a way to put them altogether in the repo with the deployed .html files. So I wrote a shell script the achieve this.</p>
 <a id="more"></a>
@@ -115,10 +115,7 @@
 <p>In blog project folder:</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre>1
 </pre></td><td class="code"><pre>$ vim <span class="keyword">push</span><span class="preprocessor">.sh</span>
-</pre></td></tr></table></figure>
-
-<p>add content:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
+</pre></td></tr></table></figure><br>add content:<br><br><figure class="highlight shell"><table><tr><td class="gutter"><pre>1
 2
 3
 4
@@ -138,19 +135,16 @@ cp -r <span class="built_in">source</span>/ public/<span class="built_in">source
 hexo deploy
 </pre></td></tr></table></figure>
 
-
 <p>add executable:</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre>1
 </pre></td><td class="code"><pre>$ <span class="keyword">chmod</span> +<span class="keyword">x</span> <span class="keyword">push</span>.sh
 </pre></td></tr></table></figure>
 
-
-<p>This script first generate “ready to publish” page files, and then check if previous version of source_backup directory exit. If exits, delete it and copy the latest version, then deploy it. <code>hexo deploy</code> command will automatically add everything in public/ folder and commit the changes.</p>
+<p>This script first generate &#x201C;ready to publish&#x201D; page files, and then check if previous version of source_backup directory exit. If exits, delete it and copy the latest version, then deploy it. <code>hexo deploy</code> command will automatically add everything in public/ folder and commit the changes.</p>
 <p>Next time use this command to deploy:</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre>1
 </pre></td><td class="code"><pre>$ ./<span class="keyword">push</span><span class="preprocessor">.sh</span>
 </pre></td></tr></table></figure>
-
 
 <p>Therefore, we have our original <code>.md</code> files safely tracked in GitHub, we can easily make changes to the posts on whatever version in the past you want. You can have the script copied to other directory if you have other Hexo projects, or add them to your <code>.bash_profile</code> script.</p>
 

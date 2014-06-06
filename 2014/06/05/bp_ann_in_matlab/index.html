@@ -1,0 +1,538 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>A implementation of Neural Network with Back Propagation in MATLAB | Flight log</title>
+  <meta name="author" content="Hugo Feng">
+  
+  <meta name="description" content="About code, machine learning, and life">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <meta property="og:title" content="A implementation of Neural Network with Back Propagation in MATLAB"/>
+  <meta property="og:site_name" content="Flight log"/>
+
+  
+    <meta property="og:image" content="undefined"/>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="Flight log" type="application/atom+xml">
+
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css"> 
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+  
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-50169885-1', 'hugofeng.info');
+  ga('send', 'pageview');
+</script>
+
+
+</head>
+
+
+<body>
+<div class="container">
+    <div class="row">
+        <div class="header">
+    <ul class="nav nav-pills pull-right">
+        <li>
+            <div>
+                <ol class="breadcrumb">
+                    
+						<li><a href="/">Home</a></li>
+                    
+						<li><a href="/archives">Archives</a></li>
+                    
+						<li><a href="/about">About</a></li>
+                    
+
+					<!--%- partial('post/blogroll') %--> 
+
+                    <li> <a href="/atom.xml">Rss</a> </li>
+                </ol>
+            </div>
+        </li>
+    </ul>
+
+    <h1>
+        <a href="/">Flight log</a> 
+    </h1>
+    <h5 class="text-muted"> About code, machine learning and part of Hugo&#39;s life.  </h5>
+</div>
+
+    </div>
+
+    <hr> 
+
+    <div class="row">
+        <!--Body content-->
+		<article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <div class="header">
+      
+  
+    <h2 class="title">A implementation of Neural Network with Back Propagation in MATLAB
+        <small>
+            <time datetime="2014-06-05T20:45:14.000Z">Jun 5 2014</time>
+        </small>
+    </h2>
+  
+
+
+    </div>
+
+    <div class="entry">
+      
+        <h3 id="Test_the_program_with_a_data_set">Test the program with a data set</h3>
+<ul>
+<li><strong>Network attributes</strong>: 1 hidden layer with 3 neurons, initial biases and weights are set to random from -1 to 1, with 0.5 learning rate</li>
+<li><strong>Target</strong>: XOR(x1, x2)</li>
+<li><strong>Training</strong> set: [x1, x2] = [0 0; 0 1; 1 0; 1 1], y = [0; 1; 1; 0]</li>
+<li><strong>Test set</strong>: (Same as training set),   error = (sum(errors .^ 2))^0.5</li>
+</ul>
+<h4 id="Output">Output</h4>
+<p><img src="/img/bp1.png" alt="Standard diviation of errors with iterations"><br><img src="/img/bp2.png" alt="Program output"><br><img src="/img/bp3.png" alt="Output of trained Neural Network"></p>
+<a id="more"></a>
+
+<h3 id="Analyze">Analyze</h3>
+<p>Since neural network with activation function Sigmoid, is a highly non-linear system, the formation of the network can be depended on the initial value of weights and biases, and its non-linear feature may grow with the number of layers as well as number of neurons. So sometimes, the following network formation can also be trained from the same training set and settings.</p>
+<p><img src="/img/bp4.png" alt="Another trained Network1"><br><img src="/img/bp5.png" alt="Another trained Network2"></p>
+<h3 id="Source_Code_in_MATLAB">Source Code in MATLAB</h3>
+<figure class="highlight MATLAB"><table><tr><td class="gutter"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+</pre></td><td class="code"><pre><span class="comment">%% BPANN: Artificial Neural Network with Back Propagation</span>
+<span class="comment">%% Author: Xuyang Feng</span>
+<span class="function"><span class="keyword">function</span>  <span class="title">BPANN</span><span class="params">()</span></span>
+
+    <span class="comment">%---Set training parameters</span>
+    iterations = <span class="number">5000</span>;
+    errorThreshhold = <span class="number">0.1</span>;
+    learningRate = <span class="number">0.5</span>;
+    <span class="comment">%---Set hidden layer type, for example: [4, 3, 2]</span>
+    hiddenNeurons = <span class="matrix">[<span class="number">3</span> <span class="number">2</span>]</span>;
+
+    
+    <span class="comment">%---&apos;Xor&apos; training data</span>
+    trainInp = <span class="matrix">[<span class="number">0</span> <span class="number">0</span>; <span class="number">0</span> <span class="number">1</span>; <span class="number">1</span> <span class="number">0</span>; <span class="number">1</span> <span class="number">1</span>]</span>;
+    trainOut = <span class="matrix">[<span class="number">0</span>; <span class="number">1</span>; <span class="number">1</span>; <span class="number">0</span>]</span>;
+    testInp = trainInp;
+    testRealOut = trainOut;
+    
+
+    <span class="comment">% %---&apos;And&apos; training data</span>
+    <span class="comment">% trainInp = [1 1; 1 0; 0 1; 0 0];</span>
+    <span class="comment">% trainOut = [1; 0; 0; 0];</span>
+    <span class="comment">% testInp = trainInp;</span>
+    <span class="comment">% testRealOut = trainOut;</span>
+
+    assert(<span class="built_in">size</span>(trainInp,<span class="number">1</span>)==<span class="built_in">size</span>(trainOut, <span class="number">1</span>),...
+        <span class="string">&apos;Counted different sets of input and output.&apos;</span>);
+
+    <span class="comment">%---Initialize Network attributes</span>
+    inArgc = <span class="built_in">size</span>(trainInp, <span class="number">2</span>);
+    outArgc = <span class="built_in">size</span>(trainOut, <span class="number">2</span>);
+    trainsetCount = <span class="built_in">size</span>(trainInp, <span class="number">1</span>);
+    
+    <span class="comment">%---Add output layer</span>
+    layerOfNeurons = <span class="matrix">[hiddenNeurons, outArgc]</span>;
+    layerCount = <span class="built_in">size</span>(layerOfNeurons, <span class="number">2</span>);
+    
+    <span class="comment">%---Weight and bias random range</span>
+    e = <span class="number">1</span>;
+    b = -e;
+
+    <span class="comment">%---Set initial random weights</span>
+    weightCell = cell(<span class="number">1</span>, layerCount);
+    <span class="keyword">for</span> <span class="built_in">i</span> = <span class="number">1</span>:layerCount
+        <span class="keyword">if</span> <span class="built_in">i</span> == <span class="number">1</span>
+            weightCell<span class="cell">{<span class="number">1</span>}</span> = unifrnd(b, e, inArgc,layerOfNeurons(<span class="number">1</span>));
+        <span class="keyword">else</span>
+            weightCell<span class="cell">{i}</span> = unifrnd(b, e, layerOfNeurons(<span class="built_in">i</span>-<span class="number">1</span>),layerOfNeurons(<span class="built_in">i</span>));
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="comment">%---Set initial biases</span>
+    biasCell = cell(<span class="number">1</span>, layerCount);
+    <span class="keyword">for</span> <span class="built_in">i</span> = <span class="number">1</span>:layerCount
+        biasCell<span class="cell">{i}</span> = unifrnd(b, e, <span class="number">1</span>, layerOfNeurons(<span class="built_in">i</span>));
+    <span class="keyword">end</span>
+
+
+    <span class="comment">%----------------------</span>
+    <span class="comment">%---Begin training</span>
+    <span class="comment">%----------------------</span>
+    <span class="keyword">for</span> iter = <span class="number">1</span>:iterations
+        <span class="keyword">for</span> <span class="built_in">i</span> = <span class="number">1</span>:trainsetCount
+            <span class="comment">% choice = randi([1 trainsetCount]);</span>
+            choice = <span class="built_in">i</span>;
+            sampleIn = trainInp(choice, :);
+            sampleTarget = trainOut(choice, :);
+
+            <span class="matrix">[realOutput, layerOutputCells]</span> = ForwardNetwork(sampleIn, layerOfNeurons, weightCell, biasCell);
+            <span class="matrix">[weightCell, biasCell]</span> = BackPropagate(learningRate, sampleIn, realOutput, sampleTarget, layerOfNeurons, ...
+                weightCell, biasCell, layerOutputCells);
+        <span class="keyword">end</span>
+
+        <span class="comment">%plot overall network error at end of each iteration</span>
+        error = <span class="built_in">zeros</span>(trainsetCount, outArgc);
+        <span class="keyword">for</span> t = <span class="number">1</span>:trainsetCount
+            <span class="matrix">[predict, layeroutput]</span> = ForwardNetwork(trainInp(t, :), layerOfNeurons, weightCell, biasCell);
+            p(t) = predict;
+            error(t, : ) = predict - trainOut(t, :);
+        <span class="keyword">end</span>
+
+        err(iter) = (sum(<span class="transposed_variable">error.</span>^<span class="number">2</span>)/trainsetCount)^<span class="number">0.5</span>;
+        figure(<span class="number">1</span>);
+        plot(err);
+
+        <span class="comment">%---Stop if reach error threshold</span>
+        <span class="keyword">if</span> err(iter) &lt; errorThreshhold
+            <span class="keyword">break</span>;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    
+    <span class="comment">%--Test the trained network with a test set</span>
+    testsetCount = <span class="built_in">size</span>(testInp, <span class="number">1</span>);
+    error = <span class="built_in">zeros</span>(testsetCount, outArgc);
+    <span class="keyword">for</span> t = <span class="number">1</span>:testsetCount
+        <span class="matrix">[predict, layeroutput]</span> = ForwardNetwork(testInp(t, :), layerOfNeurons, weightCell, biasCell);
+        p(t) = predict;
+        error(t, : ) = predict - testRealOut(t, :);
+    <span class="keyword">end</span>
+
+    <span class="comment">%---Print predictions</span>
+    fprintf(<span class="string">&apos;Ended with %d iterations.\n&apos;</span>, iter);
+    a = testInp;
+    b = testRealOut;
+    c = <span class="transposed_variable">p&apos;</span>;
+    x1_x2_act_pred_err = <span class="matrix">[a b c c-b]</span>
+
+    <span class="comment">%---Plot Surface of network predictions</span>
+    testInpx1 = <span class="matrix">[-<span class="number">1</span>:<span class="number">0.1</span>:<span class="number">1</span>]</span>;
+    testInpx2 = <span class="matrix">[-<span class="number">1</span>:<span class="number">0.1</span>:<span class="number">1</span>]</span>;
+    <span class="matrix">[X1, X2]</span> = <span class="built_in">meshgrid</span>(testInpx1, testInpx2);
+    testOutRows = <span class="built_in">size</span>(X1, <span class="number">1</span>);
+    testOutCols = <span class="built_in">size</span>(X1, <span class="number">2</span>);
+    testOut = <span class="built_in">zeros</span>(testOutRows, testOutCols);
+    <span class="keyword">for</span> row = <span class="matrix">[<span class="number">1</span>:testOutRows]</span>
+        <span class="keyword">for</span> col = <span class="matrix">[<span class="number">1</span>:testOutCols]</span>
+            test = <span class="matrix">[X1(row, col), X2(row, col)]</span>;
+            <span class="matrix">[out, l]</span> = ForwardNetwork(test, layerOfNeurons, weightCell, biasCell);
+            testOut(row, col) = out;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    figure(<span class="number">2</span>);
+    surf(X1, X2, testOut);
+
+<span class="keyword">end</span>
+
+<span class="comment">%% BackPropagate: Backpropagate the output through the network and adjust weights and biases</span>
+<span class="function"><span class="keyword">function</span> <span class="params">[weightCell, biasCell]</span> = <span class="title">BackPropagate</span><span class="params">(rate, in, realOutput, sampleTarget, layer, weightCell, biasCell, layerOutputCells)</span></span>
+    layerCount = <span class="built_in">size</span>(layer, <span class="number">2</span>);
+    delta = cell(<span class="number">1</span>, layerCount);
+    D_weight = cell(<span class="number">1</span>, layerCount);
+    D_bias = cell(<span class="number">1</span>, layerCount);
+    <span class="comment">%---From Output layer, it has different formula</span>
+    output = layerOutputCells<span class="cell">{layerCount}</span>;
+    delta<span class="cell">{layerCount}</span> = output .* (<span class="number">1</span>-output) .* (sampleTarget - output);
+    preoutput = layerOutputCells<span class="cell">{layerCount-<span class="number">1</span>}</span>;
+    D_weight<span class="cell">{layerCount}</span> = rate .* <span class="transposed_variable">preoutput&apos;</span> * delta<span class="cell">{layerCount}</span>;
+    D_bias<span class="cell">{layerCount}</span> = rate .* delta<span class="cell">{layerCount}</span>;
+
+    <span class="comment">%---Back propagate for Hidden layers</span>
+    <span class="keyword">for</span> layerIndex = layerCount-<span class="number">1</span>:-<span class="number">1</span>:<span class="number">1</span>
+        output = layerOutputCells<span class="cell">{layerIndex}</span>;
+        <span class="keyword">if</span> layerIndex == <span class="number">1</span>
+            preoutput = in;
+        <span class="keyword">else</span>
+            preoutput = layerOutputCells<span class="cell">{layerIndex-<span class="number">1</span>}</span>;
+        <span class="keyword">end</span>
+
+        weight = weightCell<span class="cell">{layerIndex+<span class="number">1</span>}</span>;
+        sumup = (weight * delta<span class="cell">{layerIndex+<span class="number">1</span>}&apos;</span>)<span class="string">&apos;;
+        delta{layerIndex} = output .* (1 - output) .* sumup;
+
+        D_weight{layerIndex} = rate .* preoutput&apos;</span> * delta<span class="cell">{layerIndex}</span>;
+        D_bias<span class="cell">{layerIndex}</span> = rate .* delta<span class="cell">{layerIndex}</span>;
+    <span class="keyword">end</span>
+    <span class="comment">%---Update weightCell and biasCell</span>
+    <span class="keyword">for</span> layerIndex = <span class="number">1</span>:layerCount
+        weightCell<span class="cell">{layerIndex}</span> = weightCell<span class="cell">{layerIndex}</span> + D_weight<span class="cell">{layerIndex}</span>;
+        biasCell<span class="cell">{layerIndex}</span> = biasCell<span class="cell">{layerIndex}</span> + D_bias<span class="cell">{layerIndex}</span>;
+    <span class="keyword">end</span>
+
+
+<span class="keyword">end</span>
+
+
+<span class="comment">%% ForwardNetwork: Compute feed forward neural network, Return the output and output of each neuron in each layer</span>
+<span class="function"><span class="keyword">function</span> <span class="params">[realOutput, layerOutputCells]</span> = <span class="title">ForwardNetwork</span><span class="params">(in, layer, weightCell, biasCell)</span></span>
+    layerCount = <span class="built_in">size</span>(layer, <span class="number">2</span>);
+    layerOutputCells = cell(<span class="number">1</span>, layerCount);
+
+    out = in;
+    <span class="keyword">for</span> layerIndex = <span class="number">1</span>:layerCount
+        X = out;
+        bias = biasCell<span class="cell">{layerIndex}</span>;
+        out = Sigmoid(X * weightCell<span class="cell">{layerIndex}</span> + bias);
+        layerOutputCells<span class="cell">{layerIndex}</span> = out;
+    <span class="keyword">end</span>
+    realOutput = out;    
+<span class="keyword">end</span>
+</pre></td></tr></table></figure>
+      
+    </div>
+
+	
+
+	<hr/>
+
+	
+		<nav id="pagination">
+			
+			
+				<a href="/2014/04/25/float-operations-on-arm/" class="alignright next" title="Floating point operations on ARM processor">Floating point operations on ARM processor</a>
+			
+		</nav>
+	
+  </div>
+</article>
+
+
+
+    </div>
+
+    <div class="footer">
+        <div class="alignleft">
+  
+	  2014 &copy; Hugo Feng,
+  
+  All rights reserved. Powered by <a href="http://zespia.tw/hexo/" title="Hexo">Hexo</a>. Hosted on <a href="https://github.com/HugoFeng/hugofeng.github.io" title="GitHub">GitHub</a>.
+</div>
+<div class="clearfix"></div>
+
+    </div>
+
+</div>
+
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+    (function($){
+        $('.fancybox').fancybox();
+    })(jQuery);
+</script>
+
+
+
+
+</body>
+</html>
