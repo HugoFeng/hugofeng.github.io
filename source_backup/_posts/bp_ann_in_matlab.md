@@ -1,4 +1,4 @@
-title: A implementation of Neural Network with Back Propagation in MATLAB
+title: An implementation of Neural Network with Back Propagation in MATLAB
 date: 2014-06-05 22:45:14
 tags:   ML
 ---
