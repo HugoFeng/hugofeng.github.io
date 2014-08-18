@@ -1,4 +1,4 @@
-title: Automatic Copy Timestamp on Mac
+title: Fast Copying Timestamp on Mac
 date: 2014-08-18 18:56:19
 tags: Mac shell
 ---

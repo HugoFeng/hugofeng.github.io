@@ -4,7 +4,7 @@
   <subtitle><![CDATA[About code, machine learning and part of Hugo's life.]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://hugofeng.info/"/>
-  <updated>2014-08-18T18:27:58.452Z</updated>
+  <updated>2014-08-18T18:39:39.037Z</updated>
   <id>http://hugofeng.info/</id>
   
   <author>
@@ -15,11 +15,11 @@
   <generator uri="http://zespia.tw/hexo/">Hexo</generator>
   
   <entry>
-    <title><![CDATA[Automatic Copy Timestamp on Mac]]></title>
+    <title><![CDATA[Fast Copying Timestamp on Mac]]></title>
     <link href="http://hugofeng.info/2014/08/18/Auto_Timestamp/"/>
     <id>http://hugofeng.info/2014/08/18/Auto_Timestamp/</id>
     <published>2014-08-18T16:56:19.000Z</published>
-    <updated>2014-08-18T18:27:09.000Z</updated>
+    <updated>2014-08-18T18:39:21.000Z</updated>
     <content type="html"><![CDATA[<p>When I&#x2019;m using Googe Docs to write logs for my lab work, it&#x2019;ll be much more convenient to insert timestamp and I&#x2019;m surprised that they don&#x2019;t have this feature (Microsoft Word has it). </p>
 <p>But if you are using Mac OSX, this would be very easy to achive. Since there&#x2019;s a pretty good command line tool called <code>date</code> that can print timestamp in multiple formats. The thing we need to do is to copy the standard output to the clipboard. </p>
 <p>There are 2 ways to do this:</p>
