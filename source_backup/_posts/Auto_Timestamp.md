@@ -22,7 +22,7 @@ Step:
 
 5. In menu bar, choose `File` -> `Save` to save your application, better to save it to `/Applications` for `Spotlight` to index. Here we name it as `TimeStamp`.
 
-Voila! Now when you are using Google Docs or any other text editor, use `Spotlight` or `Alfred` to launch the application we just created, and press key `Command` + `V` to paste the timestamp to the document.
+Voila! Now when you are using Google Docs or any other text editor, use `Spotlight` or `Alfred` to launch the application we just created, and press key `Command` + `V` to paste the timestamp to the document. You can also download my application here.[Download my TimeStamp.app](/files/TimeStamp.app)
 
 Explaining the script:
 

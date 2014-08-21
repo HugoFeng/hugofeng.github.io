@@ -131,7 +131,7 @@
 <li><p>In menu bar, choose <code>File</code> -&gt; <code>Save</code> to save your application, better to save it to <code>/Applications</code> for <code>Spotlight</code> to index. Here we name it as <code>TimeStamp</code>.</p>
 </li>
 </ol>
-<p>Voila! Now when you are using Google Docs or any other text editor, use <code>Spotlight</code> or <code>Alfred</code> to launch the application we just created, and press key <code>Command</code> + <code>V</code> to paste the timestamp to the document.</p>
+<p>Voila! Now when you are using Google Docs or any other text editor, use <code>Spotlight</code> or <code>Alfred</code> to launch the application we just created, and press key <code>Command</code> + <code>V</code> to paste the timestamp to the document. You can also download my application here.<a href="/files/TimeStamp.app">Download my TimeStamp.app</a></p>
 <p>Explaining the script:</p>
 <p>First <code>date</code> command will execute the <code>date</code> program and its output will be redirected to <code>tr</code> program, which with argument <code>-d &apos;\n&apos;</code>, will delete the last &#x201C;endline&#x201D; character. At last, the result will be past to <code>pbcopy</code> program to add it to the clipboard.</p>
 <p>Further more, we can also add arguments to <code>date</code> to customize the format of the timestamp. Here is a nice article about this. <a href="http://www.cyberciti.biz/faq/linux-unix-formatting-dates-for-display/" target="_blank" rel="external">Link.</a> For myself, I use this <code>date +&quot;%d/%m/%y %a %H:%M&quot;</code>, which print something like this: <code>18/08/14 Mon 20:25</code> .</p>
