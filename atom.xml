@@ -4,7 +4,7 @@
   <subtitle><![CDATA[About code, machine learning and part of Hugo's life.]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://hugofeng.info/"/>
-  <updated>2014-08-21T10:47:30.823Z</updated>
+  <updated>2014-08-21T10:57:12.839Z</updated>
   <id>http://hugofeng.info/</id>
   
   <author>
@@ -19,7 +19,7 @@
     <link href="http://hugofeng.info/2014/08/18/Auto_Timestamp/"/>
     <id>http://hugofeng.info/2014/08/18/Auto_Timestamp/</id>
     <published>2014-08-18T16:56:19.000Z</published>
-    <updated>2014-08-21T10:36:39.000Z</updated>
+    <updated>2014-08-21T10:57:01.000Z</updated>
     <content type="html"><![CDATA[<p>When I&#x2019;m using Googe Docs to write logs for my lab work, it&#x2019;ll be much more convenient to insert timestamp and I&#x2019;m surprised that they don&#x2019;t have this feature (Microsoft Word has it). </p>
 <p>But if you are using Mac OSX, this would be very easy to achive. Since there&#x2019;s a pretty good command line tool called <code>date</code> that can print timestamp in multiple formats. The thing we need to do is to copy the standard output to the clipboard. </p>
 <p>There are 2 ways to do this:</p>
@@ -38,7 +38,7 @@
 <li><p>In menu bar, choose <code>File</code> -&gt; <code>Save</code> to save your application, better to save it to <code>/Applications</code> for <code>Spotlight</code> to index. Here we name it as <code>TimeStamp</code>.</p>
 </li>
 </ol>
-<p>Voila! Now when you are using Google Docs or any other text editor, use <code>Spotlight</code> or <code>Alfred</code> to launch the application we just created, and press key <code>Command</code> + <code>V</code> to paste the timestamp to the document. You can also download my application here.<a href="/files/TimeStamp.app">Download my TimeStamp.app</a></p>
+<p>Voila! Now when you are using Google Docs or any other text editor, use <code>Spotlight</code> or <code>Alfred</code> to launch the application we just created, and press key <code>Command</code> + <code>V</code> to paste the timestamp to the document. You can also download my application here.<a href="/files/TimeStamp.zip">Download my TimeStamp.app</a></p>
 <p>Explaining the script:</p>
 <p>First <code>date</code> command will execute the <code>date</code> program and its output will be redirected to <code>tr</code> program, which with argument <code>-d &apos;\n&apos;</code>, will delete the last &#x201C;endline&#x201D; character. At last, the result will be past to <code>pbcopy</code> program to add it to the clipboard.</p>
 <p>Further more, we can also add arguments to <code>date</code> to customize the format of the timestamp. Here is a nice article about this. <a href="http://www.cyberciti.biz/faq/linux-unix-formatting-dates-for-display/" target="_blank" rel="external">Link.</a> For myself, I use this <code>date +&quot;%d/%m/%y %a %H:%M&quot;</code>, which print something like this: <code>18/08/14 Mon 20:25</code> .</p>
