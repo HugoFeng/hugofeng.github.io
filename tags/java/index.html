@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   
-  <title>Flight log</title>
+  <title>java | Flight log</title>
   <meta name="author" content="Hugo Feng">
   
   <meta name="description" content="About code, machine learning, and life">
@@ -78,7 +78,12 @@
     <div class="row">
         <!--Body content-->
 		
-  <article class="post">
+
+<h2 class="archive-head tag">java</h3>
+
+
+    
+        <article class="post">
   
     <div class="gallery">
   <div class="photoset">
@@ -508,222 +513,13 @@ System<span class="preprocessor">.out</span><span class="preprocessor">.println<
 
 
 
-
-  <article class="post">
-  
-    <div class="gallery">
-  <div class="photoset">
     
-      <img src="">
-    
-  </div>
-  <div class="control">
-    <div class="prev"></div>
-    <div class="next"></div>
-  </div>
-</div>
+    <nav id="pagination">
   
-  <div class="post-content">
-    <div class="header">
-      
-  
-    <h2 class="title_link"><a href="/2014/08/18/Auto_Timestamp/">Fast Copying Timestamp on Mac</a>
-        <small>
-            <time datetime="2014-08-18T16:56:19.000Z">Aug 18 2014</time>
-        </small>
-    </h2>
-  
-
-
-    </div>
-
-    <div class="entry">
-      
-        <p>When I&#x2019;m using Googe Docs to write logs for my lab work, it&#x2019;ll be much more convenient to insert timestamp and I&#x2019;m surprised that they don&#x2019;t have this feature (Microsoft Word has it). </p>
-<p>But if you are using Mac OSX, this would be very easy to achive. Since there&#x2019;s a pretty good command line tool called <code>date</code> that can print timestamp in multiple formats. The thing we need to do is to copy the standard output to the clipboard. </p>
-<p>There are 2 ways to do this:</p>
-<ul>
-<li>Using <code>Alfred</code>. <code>Alfred</code> is a tool to quick launch applications and it has a feature of quick run customized shell scripts. However, this feature is together with its <code>Power Pack</code>, which is limited to paid users. </li>
-<li>Using <code>automator</code>. <code>Automator</code> is a tool provided by Mac OSX that can pack scripts or recorded actions into an application or service. Here we choose this method.</li>
-</ul>
-<p>Step:</p>
-<ol>
-<li>launch <code>Automator</code> in <code>Launcher</code>. </li>
-<li>In menu bar, choose <code>File</code> -&gt; <code>New</code>, then choose <code>Application</code>.</li>
-<li>In the search bar search for <code>Run Shell Script</code>.</li>
-<li><p>In the right window, put in the following script:</p>
-<pre><code> <span class="built_in">date</span> <span class="subst">|</span>tr <span class="attribute">-d</span> <span class="string">&apos;\n&apos;</span><span class="subst">|</span> pbcopy
-</code></pre></li>
-<li><p>In menu bar, choose <code>File</code> -&gt; <code>Save</code> to save your application, better to save it to <code>/Applications</code> for <code>Spotlight</code> to index. Here we name it as <code>TimeStamp</code>.</p>
-</li>
-</ol>
-<p>Voila! Now when you are using Google Docs or any other text editor, use <code>Spotlight</code> or <code>Alfred</code> to launch the application we just created, and press key <code>Command</code> + <code>V</code> to paste the timestamp to the document. You can also download my application here.<a href="/files/TimeStamp.zip">Download my TimeStamp.app</a></p>
-<p>Explaining the script:</p>
-<p>First <code>date</code> command will execute the <code>date</code> program and its output will be redirected to <code>tr</code> program, which with argument <code>-d &apos;\n&apos;</code>, will delete the last &#x201C;endline&#x201D; character. At last, the result will be past to <code>pbcopy</code> program to add it to the clipboard.</p>
-<p>Further more, we can also add arguments to <code>date</code> to customize the format of the timestamp. Here is a nice article about this. <a href="http://www.cyberciti.biz/faq/linux-unix-formatting-dates-for-display/" target="_blank" rel="external">Link.</a> For myself, I use this <code>date +&quot;%d/%m/%y %a %H:%M&quot;</code>, which print something like this: <code>18/08/14 Mon 20:25</code> .</p>
-
-      
-    </div>
-
-	
-		
-	
-
-	<hr/>
-
-	
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-    <div class="gallery">
-  <div class="photoset">
-    
-      <img src="">
-    
-  </div>
-  <div class="control">
-    <div class="prev"></div>
-    <div class="next"></div>
-  </div>
-</div>
-  
-  <div class="post-content">
-    <div class="header">
-      
-  
-    <h2 class="title_link"><a href="/2014/06/05/bp_ann_in_matlab/">An implementation of Neural Network with Back Propagation in MATLAB</a>
-        <small>
-            <time datetime="2014-06-05T20:45:14.000Z">Jun 5 2014</time>
-        </small>
-    </h2>
-  
-
-
-    </div>
-
-    <div class="entry">
-      
-        <h3 id="Test_the_program_with_a_data_set">Test the program with a data set</h3>
-<ul>
-<li><strong>Network attributes</strong>: 1 hidden layer with 3 neurons, initial biases and weights are set to random from -1 to 1, with 0.5 learning rate</li>
-<li><strong>Target</strong>: XOR(x1, x2)</li>
-<li><strong>Training</strong> set: [x1, x2] = [0 0; 0 1; 1 0; 1 1], y = [0; 1; 1; 0]</li>
-<li><strong>Test set</strong>: (Same as training set),   error = (sum(errors .^ 2))^0.5</li>
-</ul>
-<h4 id="Output">Output</h4>
-<p><img src="/img/bp1.png" alt="Standard diviation of errors with iterations"><br><img src="/img/bp2.png" alt="Program output"><br><img src="/img/bp3.png" alt="Output of trained Neural Network"></p>
-
-      
-    </div>
-
-	
-		
-			<a href="/2014/06/05/bp_ann_in_matlab/#more" class="more-link">Read More</a>
-		
-	
-
-	<hr/>
-
-	
-  </div>
-</article>
-
-
-
-
-
-
-	<nav id="pagination">
-  
-  
-    <a href="/page/2/" class="alignright next">Next</a>
   
   <div class="clearfix"></div>
 </nav>
- 
 
-
-
-	<!--Sidebar content-->
-	<div class="sidebar">
-		
-<div class="container">
-
-
-
-
-	
-		<div class="col-xs-12 col-sm-6">
-	
-  	    
-<div class="widget tag">
-  <h3 class="title">Recent Posts</h3>
-  <ul class="entry">
-    
-      <li>
-        <a href="/2014/08/28/java8_lambda_stream/">Lambda and Stream in Java 8</a>
-      </li>
-    
-      <li>
-        <a href="/2014/08/18/Auto_Timestamp/">Fast Copying Timestamp on Mac</a>
-      </li>
-    
-      <li>
-        <a href="/2014/06/05/bp_ann_in_matlab/">An implementation of Neural Network with Back Propagation in MATLAB</a>
-      </li>
-    
-      <li>
-        <a href="/2014/04/25/float-operations-on-arm/">Floating point operations on ARM processor</a>
-      </li>
-    
-      <li>
-        <a href="/2014/04/17/shell-script-for-hexo-source-folder-backup/">Shell Script for Hexo source folder backup</a>
-      </li>
-    
-      <li>
-        <a href="/2014/04/17/Compile OpenCV3.0 on OSX/">Compile OpenCV 3.0 on OSX</a>
-      </li>
-    
-  </ul>
-</div>
-
-
-  	</div>
-
-	
-		<div class="col-xs-12 col-sm-3">
-	
-  	    
-<div class="widget tagcloud">
-  <h3 class="title">Tag Cloud</h3>
-  <div class="entry">
-    <a href="/tags/ML/" style="font-size: NaNpx;">ML</a><a href="/tags/Mac-shell/" style="font-size: NaNpx;">Mac shell</a><a href="/tags/embedded/" style="font-size: NaNpx;">embedded</a><a href="/tags/hexo/" style="font-size: NaNpx;">hexo</a><a href="/tags/java/" style="font-size: NaNpx;">java</a><a href="/tags/opencv/" style="font-size: NaNpx;">opencv</a>
-  </div>
-</div>
-
-  	</div>
-
-	
-		<div class="col-xs-12 col-sm-3">
-	
-  	    <div class="widget tag">
-	<h3 class="title">Links</h3>
-	<ul class="entry">
-		<li><a href="http://wilbeibi.com/" target="_blank">Wilbeibi's Blog</a></li>
-	</ul>
-</div>
-
-  	</div>
-
-
-</div>
-
-	</div>
 
 
     </div>
