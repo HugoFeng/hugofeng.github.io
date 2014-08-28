@@ -4,7 +4,7 @@
   <subtitle><![CDATA[About code, machine learning and part of Hugo's life.]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://hugofeng.info/"/>
-  <updated>2014-08-28T18:41:56.281Z</updated>
+  <updated>2014-08-28T18:49:41.478Z</updated>
   <id>http://hugofeng.info/</id>
   
   <author>
@@ -19,7 +19,7 @@
     <link href="http://hugofeng.info/2014/08/28/java8_lambda_stream/"/>
     <id>http://hugofeng.info/2014/08/28/java8_lambda_stream/</id>
     <published>2014-08-28T18:05:57.000Z</published>
-    <updated>2014-08-28T18:15:07.000Z</updated>
+    <updated>2014-08-28T18:48:19.000Z</updated>
     <content type="html"><![CDATA[<h3 id="1-_Introduction">1. Introduction</h3>
 <p> This article introduces the new functional-programming features supported in Java 8. It first talks about the basic ways to implement lambdas and streams in the latest version of JDK, and then, pros and cons of this new feature are analyzed. </p>
 <p> We assume you are already familiar with functional programming styles and have dealt with lambdas and streams in other languages. So in this article we are not going to introduce these things in conceptual level, and some of them are compared with Scheme.</p>
@@ -266,7 +266,12 @@ System<span class="preprocessor">.out</span><span class="preprocessor">.println<
 2
 </pre></td><td class="code"><pre>List&lt;Integer&gt; cdr = list<span class="preprocessor">.stream</span>()<span class="preprocessor">.skip</span>(<span class="number">1</span>)<span class="preprocessor">.collect</span>(Collectors<span class="preprocessor">.toList</span>())<span class="comment">;</span>
 System<span class="preprocessor">.out</span><span class="preprocessor">.println</span>(<span class="string">&quot;Cdr: &quot;</span> + cdr)<span class="comment">; // Cdr: [1, 2, 3, 4]</span>
-</pre></td></tr></table></figure><br>* <code>(stream-car stream)</code>, get the first element of a stream:<br><br><figure class="highlight"><table><tr><td class="gutter"><pre>1
+</pre></td></tr></table></figure>
+
+<ul>
+<li><code>(stream-car stream)</code>, get the first element of a stream:</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre>1
 2
 </pre></td><td class="code"><pre>Integer stream_car = list<span class="preprocessor">.stream</span>()<span class="preprocessor">.findFirst</span>()<span class="preprocessor">.get</span>()<span class="comment">;</span>
 System<span class="preprocessor">.out</span><span class="preprocessor">.println</span>(stream_car)<span class="comment">; // 0</span>
