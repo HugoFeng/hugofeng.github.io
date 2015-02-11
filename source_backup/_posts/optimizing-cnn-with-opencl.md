@@ -191,7 +191,7 @@ Requirements:
 //#define CHECK_RESULT
 #define DATA_PATH "E:/code/data/mnist/"
 #define KERNEL_PATH "E:/code/cpp/convnet/convnet/kernels.ocl"
-~~~ C
+~~~ 
 If you are using VS2012, it’s possible later the compiler complains that the type `float_t` is not defined, then the following code is also needed to add into `settings.h`
 
 ~~~ C
