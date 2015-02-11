@@ -113,8 +113,8 @@
 
     <div class="entry">
       
-        <p>When I&#x2019;m using Googe Docs to write logs for my lab work, it&#x2019;ll be much more convenient to insert timestamp and I&#x2019;m surprised that they don&#x2019;t have this feature (Microsoft Word has it). </p>
-<p>But if you are using Mac OSX, this would be very easy to achive. Since there&#x2019;s a pretty good command line tool called <code>date</code> that can print timestamp in multiple formats. The thing we need to do is to copy the standard output to the clipboard. </p>
+        <p>When I’m using Googe Docs to write logs for my lab work, it’ll be much more convenient to insert timestamp and I’m surprised that they don’t have this feature (Microsoft Word has it). </p>
+<p>But if you are using Mac OSX, this would be very easy to achive. Since there’s a pretty good command line tool called <code>date</code> that can print timestamp in multiple formats. The thing we need to do is to copy the standard output to the clipboard. </p>
 <p>There are 2 ways to do this:</p>
 <ul>
 <li>Using <code>Alfred</code>. <code>Alfred</code> is a tool to quick launch applications and it has a feature of quick run customized shell scripts. However, this feature is together with its <code>Power Pack</code>, which is limited to paid users. </li>
@@ -126,14 +126,14 @@
 <li>In menu bar, choose <code>File</code> -&gt; <code>New</code>, then choose <code>Application</code>.</li>
 <li>In the search bar search for <code>Run Shell Script</code>.</li>
 <li><p>In the right window, put in the following script:</p>
-<pre><code> <span class="built_in">date</span> <span class="subst">|</span>tr <span class="attribute">-d</span> <span class="string">&apos;\n&apos;</span><span class="subst">|</span> pbcopy
+<pre><code> date |tr <span class="operator">-d</span> <span class="string">'\n'</span>| pbcopy
 </code></pre></li>
 <li><p>In menu bar, choose <code>File</code> -&gt; <code>Save</code> to save your application, better to save it to <code>/Applications</code> for <code>Spotlight</code> to index. Here we name it as <code>TimeStamp</code>.</p>
 </li>
 </ol>
 <p>Voila! Now when you are using Google Docs or any other text editor, use <code>Spotlight</code> or <code>Alfred</code> to launch the application we just created, and press key <code>Command</code> + <code>V</code> to paste the timestamp to the document. You can also download my application here.<a href="/files/TimeStamp.zip">Download my TimeStamp.app</a></p>
 <p>Explaining the script:</p>
-<p>First <code>date</code> command will execute the <code>date</code> program and its output will be redirected to <code>tr</code> program, which with argument <code>-d &apos;\n&apos;</code>, will delete the last &#x201C;endline&#x201D; character. At last, the result will be past to <code>pbcopy</code> program to add it to the clipboard.</p>
+<p>First <code>date</code> command will execute the <code>date</code> program and its output will be redirected to <code>tr</code> program, which with argument <code>-d &#39;\n&#39;</code>, will delete the last “endline” character. At last, the result will be past to <code>pbcopy</code> program to add it to the clipboard.</p>
 <p>Further more, we can also add arguments to <code>date</code> to customize the format of the timestamp. Here is a nice article about this. <a href="http://www.cyberciti.biz/faq/linux-unix-formatting-dates-for-display/" target="_blank" rel="external">Link.</a> For myself, I use this <code>date +&quot;%d/%m/%y %a %H:%M&quot;</code>, which print something like this: <code>18/08/14 Mon 20:25</code> .</p>
 
       
@@ -165,7 +165,7 @@
     <div class="footer">
         <div class="alignleft">
   
-	  2014 &copy; Hugo Feng,
+	  2015 &copy; Hugo Feng,
   
   All rights reserved. Powered by <a href="http://zespia.tw/hexo/" title="Hexo">Hexo</a>. Hosted on <a href="https://github.com/HugoFeng/hugofeng.github.io" title="GitHub">GitHub</a>.
 </div>
@@ -205,5 +205,35 @@ var disqus_shortname = 'hugofeng';
 
 
 
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 </body>
 </html>

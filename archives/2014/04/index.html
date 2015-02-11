@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   
-  <title>Archives: 2014/4 | Flight log</title>
+  <title>Archives 2014/4 | Flight log</title>
   <meta name="author" content="Hugo Feng">
   
   <meta name="description" content="About code, machine learning, and life">
@@ -115,7 +115,7 @@
       
         <p>This article is a brief introduction of different implementations of floating point operation on an ARM processor.</p>
 <h3 id="1-_Early_ages">1. Early ages</h3>
-<p>There&#x2019;s no coprocessor for floating point operations on ARM, those operations are done by CPU, means of which is called <code>Float Math Emulation</code>. Normally each float point operation costs thousands of cycles, which is very inefficient. </p>
+<p>There’s no coprocessor for floating point operations on ARM, those operations are done by CPU, means of which is called <code>Float Math Emulation</code>. Normally each float point operation costs thousands of cycles, which is very inefficient. </p>
 <h3 id="2-_Soft-float">2. Soft-float</h3>
 <p>This is for those situations where the CPU does not contain a <code>floating point unit(FPU)</code>, which is a built-in coprocessor on CPU to deal with floating point operations. </p>
 <p>There are 2 different ways to do floating point operations without FPU: </p>
@@ -229,59 +229,39 @@
     <div class="entry">
       
         <h3 id="1-_Install">1. Install</h3>
-<p>Installing OpenCV on Mac can be fairly simple&#x2014;using <code>homebrew</code>, however, <code>homebrew</code> can only install a stable version of it(currently 2.4.8.2). If you want to have a taste of OpenCV3.0, you&#x2019;ll have to build from the source. This sometimes can be very annoying[1][2]. After more than a day&#x2019;s struggle, I find a solution for my machine.</p>
+<p>Installing OpenCV on Mac can be fairly simple—using <code>homebrew</code>, however, <code>homebrew</code> can only install a stable version of it(currently 2.4.8.2). If you want to have a taste of OpenCV3.0, you’ll have to build from the source. This sometimes can be very annoying[1][2]. After more than a day’s struggle, I find a solution for my machine.</p>
 <p>If you have anaconda installed, probably the vtk module has a version of 5.x, but OpenCV3.0 need vtk at least 6.1.[1]</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre><span class="variable">$ </span>brew install vtk   <span class="comment"># This gonna take some time</span>
-</pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ brew <span class="operator"><span class="keyword">install</span> vtk   # This gonna take <span class="keyword">some</span> <span class="keyword">time</span></span></div></pre></td></tr></table></figure>
 
 <p>Now download the latest OpenCV source:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre><span class="variable">$ </span>git clone git<span class="variable">@github</span>.<span class="symbol">com:</span><span class="constant">Itseez</span>/opencv.git
-</pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="variable">$ </span>git clone git<span class="variable">@github</span>.<span class="symbol">com:</span><span class="constant">Itseez</span>/opencv.git</div></pre></td></tr></table></figure>
 
 <p>Go to OpenCV source folder, </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-2
-3
-</pre></td><td class="code"><pre><span class="variable">$ </span>mkdir build
-<span class="variable">$ </span>cd build
-<span class="variable">$ </span>cmake <span class="string">&quot;Unix Makefile&quot;</span> -<span class="constant">D</span> <span class="constant">CMAKE_OSX_ARCHITECTURES</span>=x86_64 -<span class="constant">D</span> <span class="constant">BUILD_PERF_TESTS</span>=<span class="constant">OFF</span> ..
-</pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="variable">$ </span>mkdir build</div><div class="line"><span class="variable">$ </span>cd build</div><div class="line"><span class="variable">$ </span>cmake <span class="string">"Unix Makefile"</span> -<span class="constant">D</span> <span class="constant">CMAKE_OSX_ARCHITECTURES</span>=x86_64 -<span class="constant">D</span> <span class="constant">BUILD_PERF_TESTS</span>=<span class="constant">OFF</span> ..</div></pre></td></tr></table></figure>
 
-<p>Since OpenCV module &#x2018;viz&#x2019; has to be compiled with libc++ instead of libstdc++, we need to make some changes to the makefiles to ensure it is compiled that way.</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-2
-</pre></td><td class="code"><pre><span class="variable">$ </span>cd modules/viz/<span class="constant">CMakeFiles</span>/opencv_viz.dir/
-<span class="variable">$ </span>vim flags.make
-</pre></td></tr></table></figure>
+<p>Since OpenCV module ‘viz’ has to be compiled with libc++ instead of libstdc++, we need to make some changes to the makefiles to ensure it is compiled that way.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ <span class="keyword">cd</span> modules/viz/CMakeFiles/opencv_viz.dir/</div><div class="line">$ <span class="keyword">vim</span> flags.<span class="keyword">make</span></div></pre></td></tr></table></figure>
 
 <p>Add flag <code>-std=c++11 -stdlib=libc++</code><br>Do the same to <code>build/modules/viz/CMakeFiles/opencv_test_viz.dir/flags.make</code><br>Now back to the build folder. </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre><span class="variable">$ </span>make -j8  <span class="comment"># Using 8 threads to build</span>
-</pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ <span class="keyword">make</span> -j8  # Using <span class="number">8</span> threads <span class="keyword">to</span> build</div></pre></td></tr></table></figure>
 
 <p>And it should work fine.<br>Now finish up:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre><span class="variable">$ </span>make install
-</pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ <span class="keyword">make</span> install</div></pre></td></tr></table></figure>
 
 <h3 id="2-_Check">2. Check</h3>
-<p>There&#x2019;re generally 2 ways to check OpenCV&#x2019;s version. </p>
+<p>There’re generally 2 ways to check OpenCV’s version. </p>
 <ol>
 <li><p>In the OpenCV source folder, version number is defined in file:</p>
-<pre><code> modules/core/<span class="built_in">include</span>/opencv2/core/<span class="built_in">version</span>.hpp 
+<pre><code> modules<span class="regexp">/core/i</span>nclude<span class="regexp">/opencv2/</span>core<span class="regexp">/version.hpp </span>
 </code></pre></li>
 <li><p>After <code>make install</code>, you can see the copied libraries, they are usually named with version numbers. Like <code>libopencv_core.3.0.0.dylib</code>.</p>
 </li>
 </ol>
 <p>Also, you can use <code>pkg-config</code> to check if the libs are correctly located.</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre><span class="variable">$pkg</span><span class="attribute">-config</span> <span class="subst">--</span>libs opencv
-</pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="variable">$pkg</span>-config --libs opencv</div></pre></td></tr></table></figure>
 
 <p>The output will look like this:</p>
-<pre><code>/usr/<span class="built_in">local</span>/lib/libopencv_calib3d.dylib /usr/<span class="built_in">local</span>/lib/libopencv_contrib.dylib /usr/<span class="built_in">local</span>/lib/libopencv_core.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cuda.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudaarithm.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudabgsegm.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudafeatures2d.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudafilters.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudaimgproc.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudaoptflow.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudastereo.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudawarping.dylib /usr/<span class="built_in">local</span>/lib/libopencv_features2d.dylib /usr/<span class="built_in">local</span>/lib/libopencv_flann.dylib /usr/<span class="built_in">local</span>/lib/libopencv_highgui.dylib /usr/<span class="built_in">local</span>/lib/libopencv_imgproc.dylib /usr/<span class="built_in">local</span>/lib/libopencv_legacy.dylib /usr/<span class="built_in">local</span>/lib/libopencv_ml.dylib /usr/<span class="built_in">local</span>/lib/libopencv_nonfree.dylib /usr/<span class="built_in">local</span>/lib/libopencv_objdetect.dylib /usr/<span class="built_in">local</span>/lib/libopencv_optim.dylib /usr/<span class="built_in">local</span>/lib/libopencv_photo.dylib /usr/<span class="built_in">local</span>/lib/libopencv_shape.dylib /usr/<span class="built_in">local</span>/lib/libopencv_softcascade.dylib /usr/<span class="built_in">local</span>/lib/libopencv_stitching.dylib /usr/<span class="built_in">local</span>/lib/libopencv_superres.dylib /usr/<span class="built_in">local</span>/lib/libopencv_ts.<span class="operator">a</span> /usr/<span class="built_in">local</span>/lib/libopencv_video.dylib /usr/<span class="built_in">local</span>/lib/libopencv_videostab.dylib /usr/<span class="built_in">local</span>/lib/libopencv_viz.dylib
+<pre><code><span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_calib3d.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_contrib.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_core.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cuda.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudaarithm.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudabgsegm.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudafeatures2d.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudafilters.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudaimgproc.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudaoptflow.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudastereo.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudawarping.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_features2d.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_flann.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_highgui.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_imgproc.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_legacy.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_ml.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_nonfree.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_objdetect.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_optim.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_photo.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_shape.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_softcascade.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_stitching.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_superres.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_ts.a <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_video.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_videostab.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_viz.dylib
 </code></pre><h3 id="3-_Reference:">3. Reference:</h3>
 <p>[1] <a href="http://code.opencv.org/issues/3582" target="_blank" rel="external">http://code.opencv.org/issues/3582</a><br>[2] <a href="http://stackoverflow.com/questions/19671827/opencv-installation-on-mac-os-x" target="_blank" rel="external">http://stackoverflow.com/questions/19671827/opencv-installation-on-mac-os-x</a><br>[3] <a href="http://ibivanchev.blogspot.be/2013/10/opencv-mac-os-x-109.html" target="_blank" rel="external">http://ibivanchev.blogspot.be/2013/10/opencv-mac-os-x-109.html</a></p>
 
@@ -314,7 +294,7 @@
     <div class="footer">
         <div class="alignleft">
   
-	  2014 &copy; Hugo Feng,
+	  2015 &copy; Hugo Feng,
   
   All rights reserved. Powered by <a href="http://zespia.tw/hexo/" title="Hexo">Hexo</a>. Hosted on <a href="https://github.com/HugoFeng/hugofeng.github.io" title="GitHub">GitHub</a>.
 </div>
@@ -354,5 +334,35 @@ var disqus_shortname = 'hugofeng';
 
 
 
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 </body>
 </html>

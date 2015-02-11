@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   
-  <title>Archives: 2014/6 | Flight log</title>
+  <title>Archives 2014/6 | Flight log</title>
   <meta name="author" content="Hugo Feng">
   
   <meta name="description" content="About code, machine learning, and life">
@@ -154,7 +154,7 @@
     <div class="footer">
         <div class="alignleft">
   
-	  2014 &copy; Hugo Feng,
+	  2015 &copy; Hugo Feng,
   
   All rights reserved. Powered by <a href="http://zespia.tw/hexo/" title="Hexo">Hexo</a>. Hosted on <a href="https://github.com/HugoFeng/hugofeng.github.io" title="GitHub">GitHub</a>.
 </div>
@@ -194,5 +194,35 @@ var disqus_shortname = 'hugofeng';
 
 
 
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 </body>
 </html>

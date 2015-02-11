@@ -4,7 +4,7 @@
   <subtitle><![CDATA[About code, machine learning and part of Hugo's life.]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://hugofeng.info/"/>
-  <updated>2014-08-28T18:49:41.478Z</updated>
+  <updated>2015-02-11T23:32:08.335Z</updated>
   <id>http://hugofeng.info/</id>
   
   <author>
@@ -13,6 +13,145 @@
   </author>
   
   <generator uri="http://zespia.tw/hexo/">Hexo</generator>
+  
+  <entry>
+    <title><![CDATA[Optimizing Pattern Inference of Convolutional Neural Network with OpenCL]]></title>
+    <link href="http://hugofeng.info/2015/01/08/optimizing-cnn-with-opencl/"/>
+    <id>http://hugofeng.info/2015/01/08/optimizing-cnn-with-opencl/</id>
+    <published>2015-01-08T08:31:15.000Z</published>
+    <updated>2015-02-11T23:31:56.000Z</updated>
+    <content type="html"><![CDATA[<h3 id="1-_Introduction">1. Introduction</h3>
+<p>As a supervised approach of Deep Learning, Convolutional Neural Network is famous for its noise robustness and translation invariances. It has been widely used to recognize all kinds of patterns, such as hand written digits and human faces. Although Convolutional Neural Network has greatly reduced the computation, comparing with a traditional neural network with the same amount of connections, there still remains a lot of space for parallel optimizations.</p>
+<p>Here we introduce an implementation of parallelized LeNet-5 inference with OpenCL. The code for this project is hosted on <a href="https://github.com/HugoFeng/convnet" target="_blank" rel="external">https://github.com/HugoFeng/convnet</a> .</p>
+<h3 id="2-_Pattern_Inference_of_Convolutional_Neural_Network">2. Pattern Inference of Convolutional Neural Network</h3>
+<p>We are using LeNet-5, the most famous CNN architecture introduced by Yann LeCun, for pattern inference and training. The test dataset is the MNIST dataset, which contains a total of 70000 hand written digit images. Since we only consider optimizing the inference (feed forward stage) of the network, the training stage will not be mentioned.</p>
+<p><img src="/img/cnn_overview.png" alt="LeNet-5 (modified)"></p>
+<p>Above is an illustration of LeNet-5 (has been slightly modified). It has 3 convolution layers (C1, C3, C5), 2 subsampling layers (S2, S4) , 1 fully connected layer (F6) and 1 output layer.</p>
+<p>In traditional neural networks, nodes of every layer are presented as a “flat” 1-D array, and nodes from the adjacent layers are fully connected. But in convolutional networks, nodes in Convolution Layer and Subsampling Layer are given “2D+1D” representations (although stored in 1-D array as well). That means each of these layers, has several “feature maps”, in each “feature map”, nodes are organized in a 2D images fashion, in other words, each node in a layer is identified by (column index, row index, feature map index). </p>
+<p>Connections between a Convolution Layer and Subsampling Layer do not cross over, for example, each feature map in S2 only connects to its corresponding feature map in C1, and it sub-samples the feature maps in C1 with 2<em>2 to 1 with a “max” function. In the process of sub-sampling, the same 2</em>2 weight array is used over the input with respect to each feature map. </p>
+<p><img src="/img/cnn_activation.png" alt="Activation"></p>
+<p>Connections between a Subsampling Layer and a following Convolution Layer is more complicated.  As is shown above, each feature map in Convolution Layer is related to inputs from the areas of the same position in several feature maps. In the original definition of LeNet-5, the corresponding input feature map is not all of the maps but only some of them which may refer to a table given by Yann LeCun, but here we choose to connect all the input feature maps for simplicity.</p>
+<p>The Fully connected Layer is flat as traditional neural networks are, and it has fully connection with the input Convolution Network.</p>
+<p>The Output layer has 10 output nodes, and each node represents a label, which is one of the 10 digits. And the inference is computed as the node label with the largest output value.</p>
+<h3 id="3-_Performance_Analysis_of_serial_implementation">3. Performance Analysis of serial implementation</h3>
+<h4 id="3-1_Hardware_Specs">3.1 Hardware Specs</h4>
+<p>CPU Name: Intel Core i5-4250U Processor<br>Number of Cores: 2<br>Number of Threads: 4<br>Processor Base Frequency:  1.3 GHz<br>Max Turbo Frequency:  2.6 GHz<br>Number of Memory Channels: 2<br>Max Memory Bandwidth: 25.6 GB/s</p>
+<h4 id="3-2_Profiling">3.2 Profiling</h4>
+<p>Test with inference 100 samples:</p>
+<p><img src="/img/cnn_test1.png" alt="Test1"></p>
+<p>It is very obvious that the <code>forward</code> method of Class <code>ConvolutionalLayer</code> is consuming 49562/50169 = 98.79% of <code>test</code> function call’s time. So working on optimizing the method <code>forward</code> in class <code>ConvolutionalLayer</code> is the best choice.</p>
+<h3 id="4-_Performance_Analysis_of_parallel_optimization">4. Performance Analysis of parallel optimization</h3>
+<h4 id="4-1_Hardware_Specs">4.1 Hardware Specs</h4>
+<p>The first device is called Intel(R) HD Graphics 5000<br>There is a read-write cache<br>The global mem cache size is 2097152<br>The local memory size is 65536<br>The maximum work group size is: 512<br>The maximum number of dimensions is: 3<br>The maximum number of items in dimension 0 is 512<br>The maximum number of items in dimension 1 is 512<br>The maximum number of items in dimension 2 is 512</p>
+<p>Number of compute units:       40<br>Clock frequency in MHz :       200(lowest), 1000(highest)<br>Max amount of memory in bytes: 373712486<br>Memory Type:        DDR3<br>Bus Width:  128 Bit<br>Memory Bandwidth: 25.6 GB/s<br>Floating-point performance:     704 GFLOPS</p>
+<h3 id="5-_Strategies_of_Optimizations">5. Strategies of Optimizations</h3>
+<p>As has been discussed above, the most time consuming function is <code>forward</code> in class <code>ConvolutionalLayer</code>. So our goal is to minimize the time cost by this function.</p>
+<p>In my project, I have implemented 3 different approaches for parallelizing the <code>forward</code> method in class <code>ConvolutionalLayer</code>. </p>
+<ul>
+<li><p>forward_parallel: accepts one input samples at a time, which is the same as the CPU serial version. It hides all OpenCL implementations inside this function, so that codes in all the classes don’t have to make any change to be compatible with is parallelized function. User can use a macro <code>GPU</code> to switch between the original CPU <code>forward</code> implementation and the GPU “forward_parallel”.</p>
+<ul>
+<li>Lack of parallel data access: The number and topology of work items is defined by the problem, which means we cannot increase work items.</li>
+</ul>
+</li>
+</ul>
+<p><img src="/img/cnn_topo1.png" alt="Topology of Work items1"></p>
+<ul>
+<li><p>forward_batch: accepts a batch of input samples at once, and codes in other classes are modified slightly to work with the batch operation. </p>
+<ul>
+<li>The problem size of each kernel can be increased by changing the batch size.</li>
+</ul>
+</li>
+</ul>
+<p><img src="/img/cnn_topo2.png" alt="Topology of Work items2"></p>
+<ul>
+<li>forward_batch_more: acts like <code>forward_batch</code>, but each thread works for output node in several samples at the same location. As is shown below, each work item works for 2 nodes at the same location but within 2 different samples. Since nodes at the same location belonging to different samples of a batch are sharing the same set of weights, so each item will only need to load one set of weights for the inputs and applied them on the inputs of several batches. By doing so, it saves bandwidth and increases the Computational Intensity for a certain amount. Furthermore, the convolution procedure is re-coded together with the iteration of loading the input sub-matrix into private registers, so that the convolution is computed during the loading, which saves one inner loop per input per sample per output node. And the number of samples one item should deal with is defined as a macro <code>THREAD_TASKS</code>, which can be changed.</li>
+</ul>
+<p><img src="/img/cnn_topo3.png" alt="Topology of Work items3"></p>
+<h4 id="5-1_Roofline_model_Analysis">5.1 Roofline model Analysis</h4>
+<ol>
+<li><p>“forward_parallel”: </p>
+<p>a) CI = 2.625</p>
+<p>b) Peak performance = 2.625 * 25.6 = 67.2 GFLOPS</p>
+</li>
+<li><p>“forward_batch”: </p>
+<p>a) CI = 3.2</p>
+<p>b) Peak performance = 3.2 * 25.6 = 81.92 GFLOPS</p>
+</li>
+<li><p>“forward_batch_more”: </p>
+<p>a) <span>$CI = \frac{9⁄T+15.8}{1⁄T+1⁄(indepth*25)+1} * \frac{1}{4} < 3.95$</span>, (T=THREAD_TASKS, as the node/batch numbers a work item should deal with)</p>
+<p>b) Peak performance = 3.95 * 25.6 = 101.12 GFLOPS </p>
+</li>
+</ol>
+<p><img src="/img/cnn_roofline.png" alt="Roofline model"></p>
+<p>Since the first implementation has a low computational intensity and fell into memory bandwidth limitation, I designed the second and the third implementation trying to raise the computational intensity, but a CI of 3.7 is so far the best I can get while a CI of 3.95 is theoretically reachable with an infinitely large T (THREAD_TASKS). It’s still far from CI of 27.5, which will get rid of memory bandwidth limitations.</p>
+<h3 id="6-_Profiling_the_kernels">6. Profiling the kernels</h3>
+<p>We choose the second Convolution Layer to profile, which has the following parameters:</p>
+<ul>
+<li><p>Input depth: 6, height: 14, width: 14</p>
+</li>
+<li><p>Output depth: 16, height: 10, width: 10</p>
+</li>
+</ul>
+<p><img src="/img/cnn_table.png" alt="Profile result"></p>
+<p><img src="/img/cnn_best.png" alt="Time &amp; speed up"></p>
+<p>The first implementation, <code>forward_parallel</code>, operates on one sample per kernel, and it maps each work item to each output pixel, so the number of work items the kernel launches is limited by the size of the output feature maps.</p>
+<p>In order to raise the number of threads each kernel launches and make the kernel scalable, the second implementation is designed. It groups a certain amount of samples together as a batch. Therefore, multiple samples can be computed with a single kernel launch, and according to the batch size, the thread number can be greatly increased. By doing so, the kernel has raised the speed up from 47.61 to 63.3, which is not dramatic since the actual work of each work item remains the same.</p>
+<p>In the third implementation, the work of each work item is modified so that each work item can work on multiple samples. And since each work item works on the pixel of the same location of each sample, the pixels share the same set of weight matrix. So each work item only need to load the weight matrix once and it is loaded to the private memory. </p>
+<p><img src="/img/cnn_time_kernel.png" alt="kernel time"></p>
+<p>By saving bandwidth loading weights, <code>forward_batch_more</code> kernel can gain a speed up of approximately 2 times comparing to <code>forward_batch</code> kernel.</p>
+<p><img src="/img/cnn_time_kernel_t.png" alt="kernel time w.r.t. THREAD_TASKS"></p>
+<p>However, by increasing the THREAD_TASKS, which is the number of samples each work item works on, the work load of each work item is also increased. Due to the pool performance of the cores on GPU, adding too much serial work load on each thread is not a good idea. Experiments shows that with <code>THREAD_TASKS</code> set to 3, which means each work item works on 3 samples, the kernel can reach the best performance on the problem set of the second Convolutional Layer.</p>
+<p>Besides, whether using <code>forward_batch</code> or <code>forward_batch_more</code> kernel, there doesn’t seem to be much difference when considering the whole task, say testing the inference with 1000 samples with the feed forward convolutional neural network. Instead, batch size seems to have more influence than the kernels themselves.</p>
+<p><img src="/img/cnn_time_sample.png" alt="time and sample"></p>
+<p>Profiling the whole program shows why this would happen. Using “Performance and Diagnose” tool in Visual Studio 2013, it tells how much time is spent on each function, but it is worth to point out that using this tool requires target to be built with <code>Debug</code> schema, instead of <code>Release</code> schema with which the previous analysis is tested. So the exact time reported here might be not accurate and trustworthy, but the percentage data is useful. </p>
+<p><img src="/img/cnn_test2.png" alt="test2"></p>
+<p>By profiling the task of testing 1000 samples, it shows that with the power of GPU, the function that calls OpenCL kernel only counts a very small part of the whole time consumption, while the <code>forward_batch</code> functions in class <code>FullyConnectedLayer</code> and class <code>MaxpoolingLayer</code> is taking most of the time. This explains why there doesn’t seem to be a difference changing the kernel. On the other hand, this indicates that on top of the speed up we have achieved, if the <code>forward_batch</code> function of the other 2 layers are optimized, more speed up is still possible.</p>
+<p><img src="/img/cnn_time_all.png" alt="time all"></p>
+<p>Back to the whole picture, built with <code>Release</code> schema, code with OpenCL implementation runs a lot faster than the serial-only code, which gains a speed up of 34215/293.4 = 116.6 times.</p>
+<h3 id="7-_Conclusion">7. Conclusion</h3>
+<p>This report introduced three implementations of optimizing the inference part of a Convolutional Neural Network with OpenCL technology. The speed up of the specific function (function <code>forward</code>) reached 151.78 times while the speed up of the whole inference process reached 116.6 times. </p>
+<hr>
+<h3 id="Appendix">Appendix</h3>
+<h4 id="Setting_up_the_project">Setting up the project</h4>
+<p>Requirements: </p>
+<ul>
+<li>Visual Studio 2013, Xcode, or Visual Studio 2012 ( need to add some extra code ). VS2010 is not supported.</li>
+<li>Git</li>
+<li>Boost library ( only need header files, not binaries)</li>
+<li>MNIST dataset ( will be attached with the code)</li>
+</ul>
+<p>1)  Clone the <code>opencl_support</code> branch and <code>profile-parallel</code> of the repo on <a href="https://github.com/HugoFeng/convnet" target="_blank" rel="external">https://github.com/HugoFeng/convnet</a>, or just unzip my attachment zip file.</p>
+<ul>
+<li>git clone <a href="https://github.com/HugoFeng/convnet.git" target="_blank" rel="external">https://github.com/HugoFeng/convnet.git</a></li>
+<li>git checkout profile-parallel origin/profile-parallel</li>
+</ul>
+<p>2)  In the <code>convnet/convnet/</code> directory, if file <code>settings.h</code> doesn’t exits, you need to create it manually, and add the following snippet to it. (Change the directories to your own path)</p>
+<figure class="highlight C"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="preprocessor">#<span class="keyword">define</span> GPU</span></div><div class="line"><span class="comment">//#define PROFILING</span></div><div class="line"><span class="comment">//#define SIMPLE_PARALLEL</span></div><div class="line"><span class="comment">//#define BATCH_MORE</span></div><div class="line"><span class="preprocessor">#<span class="keyword">define</span> THREAD_TASKS 3</span></div><div class="line"><span class="comment">//#define CHECK_RESULT</span></div><div class="line"><span class="preprocessor">#<span class="keyword">define</span> DATA_PATH "E:/code/data/mnist/"</span></div><div class="line"><span class="preprocessor">#<span class="keyword">define</span> KERNEL_PATH "E:/code/cpp/convnet/convnet/kernels.ocl"</span></div></pre></td></tr></table></figure>
+
+<p> C<br>If you are using VS2012, it’s possible later the compiler complains that the type <code>float_t</code> is not defined, then the following code is also needed to add into <code>settings.h</code></p>
+<figure class="highlight C"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">namespace</span> <span class="built_in">std</span> {</div><div class="line">    <span class="keyword">typedef</span> <span class="keyword">float</span> float_t;</div><div class="line">}</div><div class="line"><span class="keyword">typedef</span> <span class="keyword">float</span> float_t;</div></pre></td></tr></table></figure>
+
+<p>3) Create folder <code>convnet/build</code>, and create a blank VS C++ project inside the folder. Then drag all source files inside <code>convnet/convnet</code> except <code>kernels.ocl</code> into the project. </p>
+<p>4) In property setting of the project, add the directory of boost header files, and the headers directory for OpenCL to C/C++ “include directories”.</p>
+<p>5) Add OpenCL lib directory (with the specific platform folder) to the “additional lib search path”, and add <code>OpenCL.lib</code> to the linking libs explicitly.</p>
+<p>6) For better performance, please use <code>Release</code> scheme to build.</p>
+<h4 id="Macro_explanations">Macro explanations</h4>
+<figure class="highlight C"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="preprocessor">#<span class="keyword">define</span> GPU</span></div><div class="line"><span class="comment">//#define PROFILING</span></div><div class="line"><span class="comment">//#define SIMPLE_PARALLEL</span></div><div class="line"><span class="comment">//#define BATCH_MORE</span></div><div class="line"><span class="preprocessor">#<span class="keyword">define</span> THREAD_TASKS 3</span></div><div class="line"><span class="comment">//#define CHECK_RESULT</span></div></pre></td></tr></table></figure>
+
+<p>Above are the macros defined inside <code>settings.h</code> file. The <code>settings.h</code> files is added to the <code>.gitignore</code> list so that each commit is platform and settings independent.</p>
+<ul>
+<li>If <code>GPU</code> is NOT defined, the project will only use CPU code, and the rest of the macros will not take effect on anything, while the last parameter (batch size) of the <code>n.test</code> function call should be <code>1</code> since CPU operations don’t take batch inputs.</li>
+<li>If <code>PROFILING</code> is defined, the kernels in each <code>forward_batch</code> or <code>forward_batch_more</code> functions of class <code>ConvlutionalLayer</code> will be iterated multiple times (100 times) and print out profiling info about the kernels. Before doing so, inside <code>main.cpp</code>, the <code>test_sample_count</code> and the last parameter of the <code>n.test</code> function call should be consistent, so that the program will only go forward through the network once in the testing process.</li>
+<li><code>SIMPLE_PARALLEL</code> means using <code>forward_gpu</code> for testing process, and the batch size should set to <code>1</code>. It only takes effect in branch <code>profile-parallel</code>.</li>
+<li>If <code>BATCH_MORE</code> is defined, then <code>forward_batch_more</code> is used, otherwise, <code>forward_batch</code> will be used. If <code>BATCH_MORE</code> is defined, one MUST make sure that the <code>THREAD_TASKS</code> macro defined in <code>kernels.ocl</code> file on line 103 is consistent with the macro defined. They must have the same value to compute correctly.</li>
+<li>If <code>CHECK_RESULT</code> is defined, the result will be checked after each forward feeding process is finished. Notice that this only support checking result for batch operation outputs, which means when <code>GPU</code> is undefined or <code>SIMPLE_PARALLEL</code> is defined, this macro MUST be commented out.</li>
+</ul>
+]]></content>
+    
+    
+      <category term="OpenCL CNN" scheme="http://hugofeng.info/tags/OpenCL-CNN/"/>
+    
+  </entry>
   
   <entry>
     <title><![CDATA[Lambda and Stream in Java 8]]></title>
@@ -25,35 +164,19 @@
 <p> We assume you are already familiar with functional programming styles and have dealt with lambdas and streams in other languages. So in this article we are not going to introduce these things in conceptual level, and some of them are compared with Scheme.</p>
 <h3 id="2-_What_is_a_lambda_and_a_stream_in_Java_8?">2. What is a lambda and a stream in Java 8?</h3>
 <h4 id="2-1_Lambda_expression">2.1 Lambda expression</h4>
-<p>Java 8 provides a new package <code>java.util.function</code> containing functional interfaces, and a lambda expression is an instance of a subtype of <code>Object</code> implementing one of the functional interfaces. Consider this as &#x2018;Syntactic Sugar&#x2019; mapping lambda expressions syntaxes to an anonymous class. </p>
+<p>Java 8 provides a new package <code>java.util.function</code> containing functional interfaces, and a lambda expression is an instance of a subtype of <code>Object</code> implementing one of the functional interfaces. Consider this as ‘Syntactic Sugar’ mapping lambda expressions syntaxes to an anonymous class. </p>
 <p>For example:</p>
 <ul>
 <li>Old Java style using anonymous inner class</li>
 </ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre>1
-2
-3
-4
-5
-</pre></td><td class="code"><pre>Thread t1 = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Runnable() {     
-            <span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span>() {
-                System.<span class="keyword">out</span>.println(<span class="string">&quot;Hey there anonymous!&quot;</span>);
-            }
-        });
-</pre></td></tr></table></figure>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">Thread t1 = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Runnable() {     </div><div class="line">            <span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span>() {</div><div class="line">                System.<span class="keyword">out</span>.println(<span class="string">"Hey there anonymous!"</span>);</div><div class="line">            }</div><div class="line">        });</div></pre></td></tr></table></figure>
 
 <ul>
 <li>Java 8 lambda style</li>
 </ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre>1
-2
-3
-</pre></td><td class="code"><pre>Thread t2 = <span class="keyword">new</span> Thread(
-                    <span class="function"><span class="params">()</span>-&gt;</span>{System.out.println(<span class="string">&quot;Hey lambda!&quot;</span>);} 
-                );
-</pre></td></tr></table></figure>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">Thread t2 = <span class="keyword">new</span> Thread(</div><div class="line">                    <span class="function"><span class="params">()</span>-&gt;</span>{System.out.println(<span class="string">"Hey lambda!"</span>);} </div><div class="line">                );</div></pre></td></tr></table></figure>
 
-<p>The syntax of a lambda function is like &#x201C;()-&gt;{&#x2026;}&#x201D;, where the argument are put in brackets, followed by an arrow alike sign &#x201C;-&gt;&#x201D;, with the body of the lambda as the last part. </p>
+<p>The syntax of a lambda function is like “()-&gt;{…}”, where the argument are put in brackets, followed by an arrow alike sign “-&gt;”, with the body of the lambda as the last part. </p>
 <p>There are following categories [1] of interfaces declared in <code>java.util.function</code> package:</p>
 <ul>
 <li><strong>Function</strong>: Takes a single parameter, returns result based on parameter value</li>
@@ -63,128 +186,36 @@
 <li><strong>Consumer</strong>: Takes a single parameter with no return (void)</li>
 </ul>
 <p>Beside these, one can also declare their own functional interfaces. Generally, the new java compiler accepts all interfaces declared with exactly one method as a functional interface, but one can also explicitly declare one by adding <code>@FunctionalInterface</code> annotation. For example:</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre>1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-</pre></td><td class="code"><pre><span class="keyword">public</span> <span class="keyword">class</span> Test1 {
-    @FunctionalInterface  <span class="comment">// This is optional.</span>
-    <span class="keyword">public</span> <span class="keyword">interface</span> Discount { <span class="keyword">double</span> apply(<span class="keyword">double</span> originalPrice); }
-    
-    Discount discount;
-    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setDiscount</span>(Discount d){ discount = d; }
-    
-    <span class="keyword">public</span> <span class="keyword">double</span> <span class="title">getPriceAfterDiscount</span>(<span class="keyword">double</span> price){ <span class="keyword">return</span> discount.apply(price); }
-
-    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span>(String[] args) {
-        Test1 test1 = <span class="keyword">new</span> Test1();
-        <span class="keyword">double</span> applePrice = <span class="number">1.0</span>;
-
-        <span class="comment">// With type inference, compiler will expand this lambda to </span>
-        <span class="comment">// an instance of anonymous class implementing Discount interface</span>
-        test1.setDiscount(p -&gt; <span class="number">0.8</span>*p); 
-
-        <span class="keyword">double</span> applePriceWithDiscount = test1. getPriceAfterDiscount(applePrice);
-        System.<span class="keyword">out</span>.println(applePriceWithDiscount); <span class="comment">// 0.8</span>
-    }
-    
-}
-</pre></td></tr></table></figure>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="keyword">class</span> Test1 {</div><div class="line">    @FunctionalInterface  <span class="comment">// This is optional.</span></div><div class="line">    <span class="keyword">public</span> <span class="keyword">interface</span> Discount { <span class="keyword">double</span> apply(<span class="keyword">double</span> originalPrice); }</div><div class="line">    </div><div class="line">    Discount discount;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setDiscount</span>(Discount d){ discount = d; }</div><div class="line">    </div><div class="line">    <span class="keyword">public</span> <span class="keyword">double</span> <span class="title">getPriceAfterDiscount</span>(<span class="keyword">double</span> price){ <span class="keyword">return</span> discount.apply(price); }</div><div class="line"></div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span>(String[] args) {</div><div class="line">        Test1 test1 = <span class="keyword">new</span> Test1();</div><div class="line">        <span class="keyword">double</span> applePrice = <span class="number">1.0</span>;</div><div class="line"></div><div class="line">        <span class="comment">// With type inference, compiler will expand this lambda to </span></div><div class="line">        <span class="comment">// an instance of anonymous class implementing Discount interface</span></div><div class="line">        test1.setDiscount(p -&gt; <span class="number">0.8</span>*p); </div><div class="line"></div><div class="line">        <span class="keyword">double</span> applePriceWithDiscount = test1. getPriceAfterDiscount(applePrice);</div><div class="line">        System.<span class="keyword">out</span>.println(applePriceWithDiscount); <span class="comment">// 0.8</span></div><div class="line">    }</div><div class="line">    </div><div class="line">}</div></pre></td></tr></table></figure>
 
 <h4 id="2-2_Stream">2.2 Stream</h4>
 <p>Stream API is provided in <code>java.util.stream</code> package. Stream is built on the basis of lambda with lazy evaluation feature. It is an enhancement made to collection interfaces. It is extremely handy for processing data.</p>
 <p>Due to backward compatibility reasons, simply adding additional methods to an interface will require rewriting all the classes implementing this interface. So in order to add additional features to old <code>Collection</code> Class, Java 8 introduces <code>default method</code>. <code>Default method</code> is an default implementation of a method, and is defined in the original class of the interface. With the help of <code>default methods</code>, subtypes of <code>Collection</code> class, classes user defined with old version Java, can work without realizing the added interfaces explicitly, so that adding new features to old classes will be invisible to users.</p>
-<p><code>Stream</code> is a sequence of elements supporting sequential and parallel aggregate operations. It&#x2019;s not a data structure so it doesn&#x2019;t store anything. It takes a lambda expression as an argument and returns another <code>Stream</code>, therefore, it can be made into cascades or pipelines.</p>
+<p><code>Stream</code> is a sequence of elements supporting sequential and parallel aggregate operations. It’s not a data structure so it doesn’t store anything. It takes a lambda expression as an argument and returns another <code>Stream</code>, therefore, it can be made into cascades or pipelines.</p>
 <p>Using <code>Stream</code> is very intuitive:</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre>1
-2
-3
-4
-5
-6
-7
-8
-</pre></td><td class="code"><pre>IntStream<span class="built_in">.</span><span class="keyword">iterate</span>(<span class="number">0</span>, i<span class="subst">-&gt;</span>i<span class="subst">+</span><span class="number">1</span>)
-            <span class="built_in">.</span>filter(i<span class="subst">-&gt;</span>i<span class="subst">&gt;</span><span class="number">5</span>)
-            <span class="built_in">.</span>limit(<span class="number">3</span>)
-            <span class="built_in">.</span>forEach(System<span class="built_in">.</span>out<span class="tag">::println</span>);
-<span class="comment">// Output:</span>
-<span class="comment">// 6</span>
-<span class="comment">// 7</span>
-<span class="comment">// 8</span>
-</pre></td></tr></table></figure>
-
-
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">IntStream<span class="built_in">.</span><span class="keyword">iterate</span>(<span class="number">0</span>, i<span class="subst">-&gt;</span>i<span class="subst">+</span><span class="number">1</span>)</div><div class="line">            <span class="built_in">.</span>filter(i<span class="subst">-&gt;</span>i<span class="subst">&gt;</span><span class="number">5</span>)</div><div class="line">            <span class="built_in">.</span>limit(<span class="number">3</span>)</div><div class="line">            <span class="built_in">.</span>forEach(System<span class="built_in">.</span>out<span class="tag">::println</span>);</div><div class="line"><span class="comment">// Output:</span></div><div class="line"><span class="comment">// 6</span></div><div class="line"><span class="comment">// 7</span></div><div class="line"><span class="comment">// 8</span></div></pre></td></tr></table></figure>
 
 <h3 id="3-_How_to_implement">3. How to implement</h3>
 <h4 id="3-1_Using_Lambda_expressions_in_Java_8">3.1 Using Lambda expressions in Java 8</h4>
 <ul>
 <li>Shortest way</li>
 </ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre>1
-2
-3
-</pre></td><td class="code"><pre><span class="function"><span class="params">()</span> -&gt;</span> <span class="number">5</span> // Without input variable, <span class="keyword">return</span> a number
-x<span class="function"> -&gt;</span> <span class="number">2</span> * x <span class="regexp">//</span> Take <span class="number">1</span> input variable, <span class="keyword">return</span> result <span class="keyword">of</span> multipling <span class="keyword">by</span> <span class="number">2</span>
-<span class="function"><span class="params">( x, y )</span> -&gt;</span> x - y <span class="regexp">//</span> Take <span class="number">2</span> input variables, <span class="keyword">return</span> their substraction
-</pre></td></tr></table></figure>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">() -&gt; <span class="number">5</span> // <span class="type">Without</span> input variable, <span class="keyword">return</span> a number</div><div class="line">x -&gt; <span class="number">2</span> * x // <span class="type">Take</span> <span class="number">1</span> input variable, <span class="keyword">return</span> <span class="literal">result</span> <span class="keyword">of</span> multipling by <span class="number">2</span></div><div class="line">( x, y ) -&gt; x - y // <span class="type">Take</span> <span class="number">2</span> input variables, <span class="keyword">return</span> their substraction</div></pre></td></tr></table></figure>
 
 <ul>
 <li>With type specification</li>
 </ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre>1
-2
-</pre></td><td class="code"><pre><span class="function"><span class="params">(int x, int y)</span> -&gt;</span> x + y <span class="regexp">//</span> Take <span class="number">2</span> integers <span class="keyword">and</span> <span class="keyword">return</span> their sum
-<span class="function"><span class="params">(String s)</span> -&gt;</span> System.out.println(s) <span class="regexp">//</span> Take <span class="number">1</span> String input <span class="keyword">and</span> <span class="keyword">return</span> nothing
-</pre></td></tr></table></figure>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="params">(int x, int y)</span> -&gt;</span> x + y <span class="regexp">//</span> Take <span class="number">2</span> integers <span class="keyword">and</span> <span class="keyword">return</span> their sum</div><div class="line"><span class="function"><span class="params">(String s)</span> -&gt;</span> System.out.println(s) <span class="regexp">//</span> Take <span class="number">1</span> String input <span class="keyword">and</span> <span class="keyword">return</span> nothing</div></pre></td></tr></table></figure>
 
 <ul>
 <li>Using functional interface</li>
 </ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre>1
-2
-3
-4
-5
-6
-7
-8
-9
-</pre></td><td class="code"><pre>@FunctionalInterface
-<span class="keyword">public</span> <span class="keyword">interface</span> Discount {
-    <span class="keyword">public</span> <span class="keyword">double</span> <span class="title">apply</span>(<span class="keyword">double</span> originalPrice);
-}
-
-<span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span>(String[] args) {
-    Discount discount = (x) -&gt; <span class="number">0.7</span> * x;
-    System.<span class="keyword">out</span>.println(discount.apply(<span class="number">100</span>)); <span class="comment">// 70.0</span>
-}
-</pre></td></tr></table></figure>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">@FunctionalInterface</div><div class="line"><span class="keyword">public</span> <span class="keyword">interface</span> Discount {</div><div class="line">    <span class="keyword">public</span> <span class="keyword">double</span> <span class="title">apply</span>(<span class="keyword">double</span> originalPrice);</div><div class="line">}</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span>(String[] args) {</div><div class="line">    Discount discount = (x) -&gt; <span class="number">0.7</span> * x;</div><div class="line">    System.<span class="keyword">out</span>.println(discount.apply(<span class="number">100</span>)); <span class="comment">// 70.0</span></div><div class="line">}</div></pre></td></tr></table></figure>
 
 <ul>
 <li>Using Function type</li>
 </ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre>java.util.<span class="keyword">function</span>.<span class="keyword">Function</span>&lt;<span class="built_in">Double</span>, <span class="built_in">Double</span>&gt; discountFunction = (x) -&gt; <span class="number">0.6</span>*x;
-</pre></td></tr></table></figure>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">java.util.<span class="keyword">function</span>.<span class="keyword">Function</span>&lt;<span class="built_in">Double</span>, <span class="built_in">Double</span>&gt; discountFunction = (x) -&gt; <span class="number">0.6</span>*x;</div></pre></td></tr></table></figure>
 
 <h4 id="3-2_Using_Stream_APIs_in_Java_8">3.2 Using Stream APIs in Java 8</h4>
 <p>For operating with <code>Stream</code> APIs, there are 3 kinds of methods:</p>
@@ -198,125 +229,50 @@ x<span class="function"> -&gt;</span> <span class="number">2</span> * x <span cl
 <li><strong>Terminal Operations</strong>: <code>reduce()</code>, <code>count()</code>, <code>forEach()</code>, <code>match()</code>, <code>findFirst()</code></li>
 </ul>
 <p>The first kind initially generate a stream from an existing <code>Collection</code> instance or from a pair of <code>seed</code> and <code>function</code>.</p>
-<p>Intermediate operations accept lambda expression as arguments and return a new <code>Stream</code> with &#x201C;processed&#x201D; elements. It must be followed by a terminal operation, other wise, due to laziness feature, it will not be executed.</p>
-<p>Terminal operations either doesn&#x2019;t return anything or return a new instance of <code>Collection</code>.</p>
+<p>Intermediate operations accept lambda expression as arguments and return a new <code>Stream</code> with “processed” elements. It must be followed by a terminal operation, other wise, due to laziness feature, it will not be executed.</p>
+<p>Terminal operations either doesn’t return anything or return a new instance of <code>Collection</code>.</p>
 <p>Example:</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre>1
-2
-3
-4
-5
-6
-7
-8
-</pre></td><td class="code"><pre>IntStream<span class="built_in">.</span><span class="keyword">iterate</span>(<span class="number">0</span>, i<span class="subst">-&gt;</span>i<span class="subst">+</span><span class="number">1</span>)
-            <span class="built_in">.</span>filter(i<span class="subst">-&gt;</span>i<span class="subst">&gt;</span><span class="number">5</span>)
-            <span class="built_in">.</span>limit(<span class="number">3</span>)
-            <span class="built_in">.</span>forEach(System<span class="built_in">.</span>out<span class="tag">::println</span>);
-<span class="comment">// Output:</span>
-<span class="comment">// 6</span>
-<span class="comment">// 7</span>
-<span class="comment">// 8</span>
-</pre></td></tr></table></figure><br>Here, it creates an int stream by assigning an initial value with a lambda expression, which is executed to update the value due to lazy evaluation. Then the stream is passed to an intermediate operation <code>filter</code>, which filters out the values that doesn&#x2019;t return <code>True</code> in the predicate lambda expression. After that, it is passed to another intermediate operation <code>limit</code>, which stops the stream from generating new values once it receives 3 values. At the end, it uses a terminal operation <code>forEach</code> to do the follow up operation printing out each element it receives.<br><br>Note that primitive types should be carefully used in Java <code>Stream</code>.<br><br>For example[2]:<br><br><figure class="highlight"><table><tr><td class="gutter"><pre>1
-2
-3
-4
-5
-6
-</pre></td><td class="code"><pre><span class="keyword">final</span> Integer[] integers = <span class="comment">{1, 2, 3}</span>;
-<span class="keyword">final</span> int[]     ints     = <span class="comment">{1, 2, 3}</span>;
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">IntStream<span class="built_in">.</span><span class="keyword">iterate</span>(<span class="number">0</span>, i<span class="subst">-&gt;</span>i<span class="subst">+</span><span class="number">1</span>)</div><div class="line">            <span class="built_in">.</span>filter(i<span class="subst">-&gt;</span>i<span class="subst">&gt;</span><span class="number">5</span>)</div><div class="line">            <span class="built_in">.</span>limit(<span class="number">3</span>)</div><div class="line">            <span class="built_in">.</span>forEach(System<span class="built_in">.</span>out<span class="tag">::println</span>);</div><div class="line"><span class="comment">// Output:</span></div><div class="line"><span class="comment">// 6</span></div><div class="line"><span class="comment">// 7</span></div><div class="line"><span class="comment">// 8</span></div></pre></td></tr></table></figure>
 
-Stream.<span class="keyword">of</span>(integers).forEach(System.<span class="keyword">out</span>::println); <span class="comment">//That works just fine</span>
-Stream.<span class="keyword">of</span>(ints).forEach(System.<span class="keyword">out</span>::println);     <span class="comment">//That doesn&apos;t</span>
-IntStream.<span class="keyword">of</span>(ints).forEach(System.<span class="keyword">out</span>::println);  <span class="comment">//Have to use IntStream instead</span>
-</pre></td></tr></table></figure>
+<p>Here, it creates an int stream by assigning an initial value with a lambda expression, which is executed to update the value due to lazy evaluation. Then the stream is passed to an intermediate operation <code>filter</code>, which filters out the values that doesn’t return <code>True</code> in the predicate lambda expression. After that, it is passed to another intermediate operation <code>limit</code>, which stops the stream from generating new values once it receives 3 values. At the end, it uses a terminal operation <code>forEach</code> to do the follow up operation printing out each element it receives.</p>
+<p>Note that primitive types should be carefully used in Java <code>Stream</code>.</p>
+<p>For example[2]:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">final</span> Integer[] integers = <span class="comment">{1, 2, 3}</span>;</div><div class="line"><span class="keyword">final</span> int[]     ints     = <span class="comment">{1, 2, 3}</span>;</div><div class="line"></div><div class="line">Stream.<span class="keyword">of</span>(integers).forEach(System.<span class="keyword">out</span>::println); <span class="comment">//That works just fine</span></div><div class="line">Stream.<span class="keyword">of</span>(ints).forEach(System.<span class="keyword">out</span>::println);     <span class="comment">//That doesn't</span></div><div class="line">IntStream.<span class="keyword">of</span>(ints).forEach(System.<span class="keyword">out</span>::println);  <span class="comment">//Have to use IntStream instead</span></div></pre></td></tr></table></figure>
 
-<p>This is because in <code>Stream</code> package, Java APIs are defined using generic types <code>Stream&lt;T&gt;</code> which only accepts a Class type. Luckily, there&#x2019;re special APIs to specifically deal with primitive types: <code>IntStream</code>, <code>LongStream</code> and <code>DoubleStream</code>. But also be carefull using these primitive type streams. For example:</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre>1
-2
-3
-4
-5
-</pre></td><td class="code"><pre>IntStream<span class="preprocessor">.range</span>(<span class="number">0</span>, <span class="number">10</span>)<span class="preprocessor">.collect</span>(Collectors<span class="preprocessor">.toList</span>())<span class="comment">;</span>
-// Cannot compile...
-
-IntStream<span class="preprocessor">.range</span>(<span class="number">0</span>, <span class="number">10</span>)<span class="preprocessor">.boxed</span>()<span class="preprocessor">.collect</span>(Collectors<span class="preprocessor">.toList</span>())<span class="comment">;</span>
-// Works!
-</pre></td></tr></table></figure>
+<p>This is because in <code>Stream</code> package, Java APIs are defined using generic types <code>Stream&lt;T&gt;</code> which only accepts a Class type. Luckily, there’re special APIs to specifically deal with primitive types: <code>IntStream</code>, <code>LongStream</code> and <code>DoubleStream</code>. But also be carefull using these primitive type streams. For example:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">IntStream.range(<span class="number">0</span>, <span class="number">10</span>).<span class="keyword">collect</span>(Collectors.<span class="keyword">toList</span>());</div><div class="line"><span class="comment">// Cannot compile...</span></div><div class="line"></div><div class="line">IntStream.range(<span class="number">0</span>, <span class="number">10</span>).boxed().<span class="keyword">collect</span>(Collectors.<span class="keyword">toList</span>());</div><div class="line"><span class="comment">// Works!</span></div></pre></td></tr></table></figure>
 
 <p>Primitive types must be boxed to Objects in order to follow up by a <code>collect</code> operation.</p>
 <h4 id="3-3_Comparing_with_Scheme">3.3 Comparing with Scheme</h4>
 <ul>
 <li><code>(car list)</code>, get the head of a list:</li>
 </ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre>1
-2
-3
-4
-</pre></td><td class="code"><pre>List&lt;Integer&gt; list = Arrays<span class="preprocessor">.asList</span>(<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>)<span class="comment">;</span>
-
-Integer car = list<span class="preprocessor">.stream</span>()<span class="preprocessor">.findFirst</span>()<span class="preprocessor">.get</span>()<span class="comment">;</span>
-System<span class="preprocessor">.out</span><span class="preprocessor">.println</span>(<span class="string">&quot;Car: &quot;</span> + car)<span class="comment">; // Car: 0</span>
-</pre></td></tr></table></figure>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">List</span><span class="subst">&lt;</span><span class="built_in">Integer</span><span class="subst">&gt;</span> <span class="built_in">list</span> <span class="subst">=</span> Arrays<span class="built_in">.</span>asList(<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>);</div><div class="line"></div><div class="line"><span class="built_in">Integer</span> car <span class="subst">=</span> <span class="built_in">list</span><span class="built_in">.</span>stream()<span class="built_in">.</span>findFirst()<span class="built_in">.</span>get();</div><div class="line">System<span class="built_in">.</span>out<span class="built_in">.</span>println(<span class="string">"Car: "</span> <span class="subst">+</span> car); <span class="comment">// Car: 0</span></div></pre></td></tr></table></figure>
 
 <ul>
 <li><code>(cdr list)</code>, get the rest of a list:</li>
 </ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre>1
-2
-</pre></td><td class="code"><pre>List&lt;Integer&gt; cdr = list<span class="preprocessor">.stream</span>()<span class="preprocessor">.skip</span>(<span class="number">1</span>)<span class="preprocessor">.collect</span>(Collectors<span class="preprocessor">.toList</span>())<span class="comment">;</span>
-System<span class="preprocessor">.out</span><span class="preprocessor">.println</span>(<span class="string">&quot;Cdr: &quot;</span> + cdr)<span class="comment">; // Cdr: [1, 2, 3, 4]</span>
-</pre></td></tr></table></figure>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">List</span><span class="subst">&lt;</span><span class="built_in">Integer</span><span class="subst">&gt;</span> cdr <span class="subst">=</span> <span class="built_in">list</span><span class="built_in">.</span>stream()<span class="built_in">.</span><span class="keyword">skip</span>(<span class="number">1</span>)<span class="built_in">.</span>collect(Collectors<span class="built_in">.</span>toList());</div><div class="line">System<span class="built_in">.</span>out<span class="built_in">.</span>println(<span class="string">"Cdr: "</span> <span class="subst">+</span> cdr); <span class="comment">// Cdr: [1, 2, 3, 4]</span></div></pre></td></tr></table></figure>
 
 <ul>
 <li><code>(stream-car stream)</code>, get the first element of a stream:</li>
 </ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre>1
-2
-</pre></td><td class="code"><pre>Integer stream_car = list<span class="preprocessor">.stream</span>()<span class="preprocessor">.findFirst</span>()<span class="preprocessor">.get</span>()<span class="comment">;</span>
-System<span class="preprocessor">.out</span><span class="preprocessor">.println</span>(stream_car)<span class="comment">; // 0</span>
-</pre></td></tr></table></figure>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">Integer stream_car = list.stream().findFirst().<span class="keyword">get</span>();</div><div class="line">System.<span class="keyword">out</span>.println(stream_car); <span class="comment">// 0</span></div></pre></td></tr></table></figure>
 
 <ul>
 <li><code>(stream-cdr stream)</code>, get the rest of of the stream:</li>
 </ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre>1
-2
-3
-4
-5
-6
-7
-</pre></td><td class="code"><pre>Stream s = <span class="keyword">list</span>.stream();
-s.<span class="keyword">forEach</span>(System.out::<span class="keyword">print</span>); <span class="comment">// 01234</span>
-Stream stream_cdr1 = s.skip(<span class="number">1</span>); <span class="comment">// Error: stream has already been operated upon or closed</span>
-
-Stream s2 = <span class="keyword">list</span>.stream();
-Stream stream_cdr2 = s2.skip(<span class="number">1</span>); <span class="comment">// Didn&apos;t end with a terminal operation, skip() is not computed</span>
-stream_cdr2.<span class="keyword">forEach</span>(System.out::<span class="keyword">print</span>); <span class="comment">// 1234</span>
-</pre></td></tr></table></figure>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">Stream s = <span class="keyword">list</span>.stream();</div><div class="line">s.<span class="keyword">forEach</span>(System.out::<span class="keyword">print</span>); <span class="comment">// 01234</span></div><div class="line">Stream stream_cdr1 = s.skip(<span class="number">1</span>); <span class="comment">// Error: stream has already been operated upon or closed</span></div><div class="line"></div><div class="line">Stream s2 = <span class="keyword">list</span>.stream();</div><div class="line">Stream stream_cdr2 = s2.skip(<span class="number">1</span>); <span class="comment">// Didn't end with a terminal operation, skip() is not computed</span></div><div class="line">stream_cdr2.<span class="keyword">forEach</span>(System.out::<span class="keyword">print</span>); <span class="comment">// 1234</span></div></pre></td></tr></table></figure>
 
 <ul>
-<li><code>(cons &apos;a &apos;(b c d))</code>, construct a list with a new head attached:</li>
+<li><code>(cons &#39;a &#39;(b c d))</code>, construct a list with a new head attached:</li>
 </ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre>1
-2
-3
-</pre></td><td class="code"><pre>List&lt;String&gt; list = Arrays<span class="preprocessor">.asList</span>(<span class="string">&quot;b&quot;</span>, <span class="string">&quot;c&quot;</span>, <span class="string">&quot;d&quot;</span>)<span class="comment">;</span>
-List&lt;String&gt; cons_list = Stream<span class="preprocessor">.concat</span>(Stream<span class="preprocessor">.of</span>(<span class="string">&quot;a&quot;</span>), list<span class="preprocessor">.stream</span>())<span class="preprocessor">.collect</span>(Collectors<span class="preprocessor">.toList</span>())<span class="comment">;</span>
-System<span class="preprocessor">.out</span><span class="preprocessor">.println</span>(cons_list)<span class="comment">; // [a, b, c, d]</span>
-</pre></td></tr></table></figure>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">List</span><span class="subst">&lt;</span><span class="built_in">String</span><span class="subst">&gt;</span> <span class="built_in">list</span> <span class="subst">=</span> Arrays<span class="built_in">.</span>asList(<span class="string">"b"</span>, <span class="string">"c"</span>, <span class="string">"d"</span>);</div><div class="line"><span class="built_in">List</span><span class="subst">&lt;</span><span class="built_in">String</span><span class="subst">&gt;</span> cons_list <span class="subst">=</span> Stream<span class="built_in">.</span>concat(Stream<span class="built_in">.</span>of(<span class="string">"a"</span>), <span class="built_in">list</span><span class="built_in">.</span>stream())<span class="built_in">.</span>collect(Collectors<span class="built_in">.</span>toList());</div><div class="line">System<span class="built_in">.</span>out<span class="built_in">.</span>println(cons_list); <span class="comment">// [a, b, c, d]</span></div></pre></td></tr></table></figure>
 
 <ul>
 <li><code>(cons-stream n stream)</code>, construct a stream with a new head attached:</li>
 </ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre>1
-2
-</pre></td><td class="code"><pre>Stream cons_stream = Stream<span class="preprocessor">.concat</span>(Stream<span class="preprocessor">.of</span>(n), list<span class="preprocessor">.stream</span>())<span class="comment">;</span>
-cons_stream<span class="preprocessor">.forEach</span>(System<span class="preprocessor">.out</span>::print)<span class="comment">; // abcd</span>
-</pre></td></tr></table></figure>
-
-
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">Stream cons_stream = Stream.concat(Stream.of(n), <span class="keyword">list</span>.stream());</div><div class="line">cons_stream.<span class="keyword">forEach</span>(System.out::<span class="keyword">print</span>); <span class="comment">// abcd</span></div></pre></td></tr></table></figure>
 
 <h3 id="4-_Hightlights">4. Hightlights</h3>
 <ul>
@@ -327,84 +283,24 @@ cons_stream<span class="preprocessor">.forEach</span>(System<span class="preproc
 <li>Easy to parallelize</li>
 </ul>
 <p>By using <code>Stream</code> APIs, one can easily parallelize the process simply by changing <code>stream()</code> to <code>parallelStream()</code>. For example:</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre>1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-</pre></td><td class="code"><pre>// Generate a list with <span class="number">10000000</span> elements
-List&lt;Integer&gt; list = IntStream<span class="preprocessor">.range</span>(<span class="number">0</span>, <span class="number">10000000</span>)
-                            <span class="preprocessor">.boxed</span>()<span class="preprocessor">.collect</span>(Collectors<span class="preprocessor">.toList</span>())<span class="comment">;</span>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// Generate a list with 10000000 elements</span></div><div class="line">List&lt;Integer&gt; list = IntStream.range(<span class="number">0</span>, <span class="number">10000000</span>)</div><div class="line">                            .boxed().<span class="keyword">collect</span>(Collectors.<span class="keyword">toList</span>());</div><div class="line"></div><div class="line"><span class="comment">// Sequencial</span></div><div class="line"><span class="keyword">long</span> startTime = System.currentTimeMillis();</div><div class="line">List&lt;Integer&gt; evenList = list.stream()</div><div class="line">                            .filter(i-&gt;i%<span class="number">2</span>==<span class="number">0</span>).<span class="keyword">collect</span>(Collectors.<span class="keyword">toList</span>());</div><div class="line"><span class="keyword">long</span> estimatedTime = System.currentTimeMillis() - startTime;</div><div class="line"></div><div class="line"><span class="comment">// Parallelized</span></div><div class="line"><span class="keyword">long</span> startTime2 = System.currentTimeMillis();</div><div class="line">List&lt;Integer&gt; oddList  = list.parallelStream()</div><div class="line">                            .filter(i-&gt;i%<span class="number">2</span>!=<span class="number">0</span>).<span class="keyword">collect</span>(Collectors.<span class="keyword">toList</span>());</div><div class="line"><span class="keyword">long</span> estimatedTime2 = System.currentTimeMillis() - startTime2;</div><div class="line">System.out.<span class="keyword">println</span>(<span class="string">"Time1: "</span> + estimatedTime + <span class="string">" Time2: "</span> + estimatedTime2);</div><div class="line"></div><div class="line"><span class="comment">// Output:</span></div><div class="line"><span class="comment">// Time1: 1987 Time2: 1029</span></div></pre></td></tr></table></figure>
 
-// Sequencial
-long startTime = System<span class="preprocessor">.currentTimeMillis</span>()<span class="comment">;</span>
-List&lt;Integer&gt; evenList = list<span class="preprocessor">.stream</span>()
-                            <span class="preprocessor">.filter</span>(i-&gt;i%<span class="number">2</span>==<span class="number">0</span>)<span class="preprocessor">.collect</span>(Collectors<span class="preprocessor">.toList</span>())<span class="comment">;</span>
-long estimatedTime = System<span class="preprocessor">.currentTimeMillis</span>() - startTime<span class="comment">;</span>
-
-// Parallelized
-long startTime2 = System<span class="preprocessor">.currentTimeMillis</span>()<span class="comment">;</span>
-List&lt;Integer&gt; oddList  = list<span class="preprocessor">.parallelStream</span>()
-                            <span class="preprocessor">.filter</span>(i-&gt;i%<span class="number">2</span>!=<span class="number">0</span>)<span class="preprocessor">.collect</span>(Collectors<span class="preprocessor">.toList</span>())<span class="comment">;</span>
-long estimatedTime2 = System<span class="preprocessor">.currentTimeMillis</span>() - startTime2<span class="comment">;</span>
-System<span class="preprocessor">.out</span><span class="preprocessor">.println</span>(<span class="string">&quot;Time1: &quot;</span> + estimatedTime + <span class="string">&quot; Time2: &quot;</span> + estimatedTime2)<span class="comment">;</span>
-
-// Output:
-// Time1: <span class="number">1987</span> Time2: <span class="number">1029</span>
-</pre></td></tr></table></figure>
-
-<p>If the process doesn&#x2019;t involve any synchronized variable or operation (here the collect operation is working on one list, therefore need to be locked and unlocked), the improvement would be much significant. The parallel processes is managed under the hood, which means one cannot assign explicitly how many threads to run. But in this way the code has more &#x201C;cross platform&#x201D; benifits, so that one don&#x2019;t have change the parallel settings since everything is handled automatically.</p>
+<p>If the process doesn’t involve any synchronized variable or operation (here the collect operation is working on one list, therefore need to be locked and unlocked), the improvement would be much significant. The parallel processes is managed under the hood, which means one cannot assign explicitly how many threads to run. But in this way the code has more “cross platform” benifits, so that one don’t have change the parallel settings since everything is handled automatically.</p>
 <ul>
 <li>Laziness</li>
 </ul>
-<p>Harnessing the benifit of lazy evaluation will help to improve the efficiency of the program. One can define a lot of <code>Stream</code> but as long as it&#x2019;s not followed by a terminal operation, it&#x2019;s not executed. Furthermore, due to laziness feature of <code>Stream</code>, datas are generated &#x201C;on the fly&#x201D; instead of creating a whole list of elements and then iterate through them, not to mention <code>List</code> cannot be infinent, which a <code>Stream</code> can achieve easily.</p>
+<p>Harnessing the benifit of lazy evaluation will help to improve the efficiency of the program. One can define a lot of <code>Stream</code> but as long as it’s not followed by a terminal operation, it’s not executed. Furthermore, due to laziness feature of <code>Stream</code>, datas are generated “on the fly” instead of creating a whole list of elements and then iterate through them, not to mention <code>List</code> cannot be infinent, which a <code>Stream</code> can achieve easily.</p>
 <h3 id="5-_Limitations">5. Limitations</h3>
 <ul>
 <li>Functional interface limitation</li>
 </ul>
-<p>As mentioned before, lambdas in Java 8 are &#x201C;Syntactic Sugars&#x201D; to map &#x201C;arrow style&#x201D; to anonymous inner class definations. All lambdas must has a functional interface with matching signature. This is due to Java&#x2019;s static type limitation. Although <code>java.util.function</code> package has provided a variaty of functional interfaces with generic types and compiler can use type inference to find the matching interface, one has to define his own interfaces if they&#x2019;re not provided, for example, a lambda with 3 input arguments.</p>
+<p>As mentioned before, lambdas in Java 8 are “Syntactic Sugars” to map “arrow style” to anonymous inner class definations. All lambdas must has a functional interface with matching signature. This is due to Java’s static type limitation. Although <code>java.util.function</code> package has provided a variaty of functional interfaces with generic types and compiler can use type inference to find the matching interface, one has to define his own interfaces if they’re not provided, for example, a lambda with 3 input arguments.</p>
 <ul>
 <li>External variable referencing</li>
 </ul>
 <p>Java does not allow changing the value or reference of a outside variable inside an anonymous inner class, and all variables that declared outside the anonymous class are inexplictly restrained to <code>final</code> inside. So this regulation also applies to lambdas.</p>
 <p>For example:</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre>1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-</pre></td><td class="code"><pre>int a <span class="subst">=</span> <span class="number">1</span>;
-                
-<span class="keyword">Thread</span> t1 <span class="subst">=</span> <span class="literal">new</span> <span class="keyword">Thread</span>(<span class="literal">new</span> Runnable() {     
-    <span class="keyword">public</span> <span class="literal">void</span> run() {
-        a <span class="subst">=</span> <span class="number">2</span>; <span class="comment">// This cannot pass the compilation, because `a` is declared </span>
-        <span class="comment">// inexplictly `final` inside, therefore can&apos;t be changed.</span>
-    }
-});
-
-<span class="keyword">Thread</span> t2 <span class="subst">=</span> <span class="literal">new</span> <span class="keyword">Thread</span>(
-        ()<span class="subst">-&gt;</span>{a <span class="subst">=</span> <span class="number">2</span>;} ); <span class="comment">// This cannot pass either.</span>
-</pre></td></tr></table></figure>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">int a <span class="subst">=</span> <span class="number">1</span>;</div><div class="line">                </div><div class="line"><span class="keyword">Thread</span> t1 <span class="subst">=</span> <span class="literal">new</span> <span class="keyword">Thread</span>(<span class="literal">new</span> Runnable() {     </div><div class="line">    <span class="keyword">public</span> <span class="literal">void</span> run() {</div><div class="line">        a <span class="subst">=</span> <span class="number">2</span>; <span class="comment">// This cannot pass the compilation, because `a` is declared </span></div><div class="line">        <span class="comment">// inexplictly `final` inside, therefore can't be changed.</span></div><div class="line">    }</div><div class="line">});</div><div class="line"></div><div class="line"><span class="keyword">Thread</span> t2 <span class="subst">=</span> <span class="literal">new</span> <span class="keyword">Thread</span>(</div><div class="line">        ()<span class="subst">-&gt;</span>{a <span class="subst">=</span> <span class="number">2</span>;} ); <span class="comment">// This cannot pass either.</span></div></pre></td></tr></table></figure>
 
 <h3 id="6-_References">6. References</h3>
 <p>1: <a href="http://www.ibm.com/developerworks/java/library/j-java8lambdas/index.html" target="_blank" rel="external">http://www.ibm.com/developerworks/java/library/j-java8lambdas/index.html</a></p>
@@ -422,8 +318,8 @@ System<span class="preprocessor">.out</span><span class="preprocessor">.println<
     <id>http://hugofeng.info/2014/08/18/Auto_Timestamp/</id>
     <published>2014-08-18T16:56:19.000Z</published>
     <updated>2014-08-21T10:57:01.000Z</updated>
-    <content type="html"><![CDATA[<p>When I&#x2019;m using Googe Docs to write logs for my lab work, it&#x2019;ll be much more convenient to insert timestamp and I&#x2019;m surprised that they don&#x2019;t have this feature (Microsoft Word has it). </p>
-<p>But if you are using Mac OSX, this would be very easy to achive. Since there&#x2019;s a pretty good command line tool called <code>date</code> that can print timestamp in multiple formats. The thing we need to do is to copy the standard output to the clipboard. </p>
+    <content type="html"><![CDATA[<p>When I’m using Googe Docs to write logs for my lab work, it’ll be much more convenient to insert timestamp and I’m surprised that they don’t have this feature (Microsoft Word has it). </p>
+<p>But if you are using Mac OSX, this would be very easy to achive. Since there’s a pretty good command line tool called <code>date</code> that can print timestamp in multiple formats. The thing we need to do is to copy the standard output to the clipboard. </p>
 <p>There are 2 ways to do this:</p>
 <ul>
 <li>Using <code>Alfred</code>. <code>Alfred</code> is a tool to quick launch applications and it has a feature of quick run customized shell scripts. However, this feature is together with its <code>Power Pack</code>, which is limited to paid users. </li>
@@ -435,14 +331,14 @@ System<span class="preprocessor">.out</span><span class="preprocessor">.println<
 <li>In menu bar, choose <code>File</code> -&gt; <code>New</code>, then choose <code>Application</code>.</li>
 <li>In the search bar search for <code>Run Shell Script</code>.</li>
 <li><p>In the right window, put in the following script:</p>
-<pre><code> <span class="built_in">date</span> <span class="subst">|</span>tr <span class="attribute">-d</span> <span class="string">&apos;\n&apos;</span><span class="subst">|</span> pbcopy
+<pre><code> date |tr <span class="operator">-d</span> <span class="string">'\n'</span>| pbcopy
 </code></pre></li>
 <li><p>In menu bar, choose <code>File</code> -&gt; <code>Save</code> to save your application, better to save it to <code>/Applications</code> for <code>Spotlight</code> to index. Here we name it as <code>TimeStamp</code>.</p>
 </li>
 </ol>
 <p>Voila! Now when you are using Google Docs or any other text editor, use <code>Spotlight</code> or <code>Alfred</code> to launch the application we just created, and press key <code>Command</code> + <code>V</code> to paste the timestamp to the document. You can also download my application here.<a href="/files/TimeStamp.zip">Download my TimeStamp.app</a></p>
 <p>Explaining the script:</p>
-<p>First <code>date</code> command will execute the <code>date</code> program and its output will be redirected to <code>tr</code> program, which with argument <code>-d &apos;\n&apos;</code>, will delete the last &#x201C;endline&#x201D; character. At last, the result will be past to <code>pbcopy</code> program to add it to the clipboard.</p>
+<p>First <code>date</code> command will execute the <code>date</code> program and its output will be redirected to <code>tr</code> program, which with argument <code>-d &#39;\n&#39;</code>, will delete the last “endline” character. At last, the result will be past to <code>pbcopy</code> program to add it to the clipboard.</p>
 <p>Further more, we can also add arguments to <code>date</code> to customize the format of the timestamp. Here is a nice article about this. <a href="http://www.cyberciti.biz/faq/linux-unix-formatting-dates-for-display/" target="_blank" rel="external">Link.</a> For myself, I use this <code>date +&quot;%d/%m/%y %a %H:%M&quot;</code>, which print something like this: <code>18/08/14 Mon 20:25</code> .</p>
 ]]></content>
     
@@ -472,365 +368,7 @@ System<span class="preprocessor">.out</span><span class="preprocessor">.println<
 <p>Since neural network with activation function Sigmoid, is a highly non-linear system, the formation of the network can be depended on the initial value of weights and biases, and its non-linear feature may grow with the number of layers as well as number of neurons. So sometimes, the following network formation can also be trained from the same training set and settings.</p>
 <p><img src="/img/bp4.png" alt="Another trained Network1"><br><img src="/img/bp5.png" alt="Another trained Network2"></p>
 <h3 id="Source_Code_in_MATLAB">Source Code in MATLAB</h3>
-<figure class="highlight MATLAB"><table><tr><td class="gutter"><pre>1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24
-25
-26
-27
-28
-29
-30
-31
-32
-33
-34
-35
-36
-37
-38
-39
-40
-41
-42
-43
-44
-45
-46
-47
-48
-49
-50
-51
-52
-53
-54
-55
-56
-57
-58
-59
-60
-61
-62
-63
-64
-65
-66
-67
-68
-69
-70
-71
-72
-73
-74
-75
-76
-77
-78
-79
-80
-81
-82
-83
-84
-85
-86
-87
-88
-89
-90
-91
-92
-93
-94
-95
-96
-97
-98
-99
-100
-101
-102
-103
-104
-105
-106
-107
-108
-109
-110
-111
-112
-113
-114
-115
-116
-117
-118
-119
-120
-121
-122
-123
-124
-125
-126
-127
-128
-129
-130
-131
-132
-133
-134
-135
-136
-137
-138
-139
-140
-141
-142
-143
-144
-145
-146
-147
-148
-149
-150
-151
-152
-153
-154
-155
-156
-157
-158
-159
-160
-161
-162
-163
-164
-165
-166
-167
-168
-169
-170
-171
-172
-173
-174
-175
-176
-177
-178
-179
-</pre></td><td class="code"><pre><span class="comment">%% BPANN: Artificial Neural Network with Back Propagation</span>
-<span class="comment">%% Author: Xuyang Feng</span>
-<span class="function"><span class="keyword">function</span>  <span class="title">BPANN</span><span class="params">()</span></span>
-
-    <span class="comment">%---Set training parameters</span>
-    iterations = <span class="number">5000</span>;
-    errorThreshhold = <span class="number">0.1</span>;
-    learningRate = <span class="number">0.5</span>;
-    <span class="comment">%---Set hidden layer type, for example: [4, 3, 2]</span>
-    hiddenNeurons = <span class="matrix">[<span class="number">3</span> <span class="number">2</span>]</span>;
-
-    
-    <span class="comment">%---&apos;Xor&apos; training data</span>
-    trainInp = <span class="matrix">[<span class="number">0</span> <span class="number">0</span>; <span class="number">0</span> <span class="number">1</span>; <span class="number">1</span> <span class="number">0</span>; <span class="number">1</span> <span class="number">1</span>]</span>;
-    trainOut = <span class="matrix">[<span class="number">0</span>; <span class="number">1</span>; <span class="number">1</span>; <span class="number">0</span>]</span>;
-    testInp = trainInp;
-    testRealOut = trainOut;
-    
-
-    <span class="comment">% %---&apos;And&apos; training data</span>
-    <span class="comment">% trainInp = [1 1; 1 0; 0 1; 0 0];</span>
-    <span class="comment">% trainOut = [1; 0; 0; 0];</span>
-    <span class="comment">% testInp = trainInp;</span>
-    <span class="comment">% testRealOut = trainOut;</span>
-
-    assert(<span class="built_in">size</span>(trainInp,<span class="number">1</span>)==<span class="built_in">size</span>(trainOut, <span class="number">1</span>),...
-        <span class="string">&apos;Counted different sets of input and output.&apos;</span>);
-
-    <span class="comment">%---Initialize Network attributes</span>
-    inArgc = <span class="built_in">size</span>(trainInp, <span class="number">2</span>);
-    outArgc = <span class="built_in">size</span>(trainOut, <span class="number">2</span>);
-    trainsetCount = <span class="built_in">size</span>(trainInp, <span class="number">1</span>);
-    
-    <span class="comment">%---Add output layer</span>
-    layerOfNeurons = <span class="matrix">[hiddenNeurons, outArgc]</span>;
-    layerCount = <span class="built_in">size</span>(layerOfNeurons, <span class="number">2</span>);
-    
-    <span class="comment">%---Weight and bias random range</span>
-    e = <span class="number">1</span>;
-    b = -e;
-
-    <span class="comment">%---Set initial random weights</span>
-    weightCell = cell(<span class="number">1</span>, layerCount);
-    <span class="keyword">for</span> <span class="built_in">i</span> = <span class="number">1</span>:layerCount
-        <span class="keyword">if</span> <span class="built_in">i</span> == <span class="number">1</span>
-            weightCell<span class="cell">{<span class="number">1</span>}</span> = unifrnd(b, e, inArgc,layerOfNeurons(<span class="number">1</span>));
-        <span class="keyword">else</span>
-            weightCell<span class="cell">{i}</span> = unifrnd(b, e, layerOfNeurons(<span class="built_in">i</span>-<span class="number">1</span>),layerOfNeurons(<span class="built_in">i</span>));
-        <span class="keyword">end</span>
-    <span class="keyword">end</span>
-
-    <span class="comment">%---Set initial biases</span>
-    biasCell = cell(<span class="number">1</span>, layerCount);
-    <span class="keyword">for</span> <span class="built_in">i</span> = <span class="number">1</span>:layerCount
-        biasCell<span class="cell">{i}</span> = unifrnd(b, e, <span class="number">1</span>, layerOfNeurons(<span class="built_in">i</span>));
-    <span class="keyword">end</span>
-
-
-    <span class="comment">%----------------------</span>
-    <span class="comment">%---Begin training</span>
-    <span class="comment">%----------------------</span>
-    <span class="keyword">for</span> iter = <span class="number">1</span>:iterations
-        <span class="keyword">for</span> <span class="built_in">i</span> = <span class="number">1</span>:trainsetCount
-            <span class="comment">% choice = randi([1 trainsetCount]);</span>
-            choice = <span class="built_in">i</span>;
-            sampleIn = trainInp(choice, :);
-            sampleTarget = trainOut(choice, :);
-
-            <span class="matrix">[realOutput, layerOutputCells]</span> = ForwardNetwork(sampleIn, layerOfNeurons, weightCell, biasCell);
-            <span class="matrix">[weightCell, biasCell]</span> = BackPropagate(learningRate, sampleIn, realOutput, sampleTarget, layerOfNeurons, ...
-                weightCell, biasCell, layerOutputCells);
-        <span class="keyword">end</span>
-
-        <span class="comment">%plot overall network error at end of each iteration</span>
-        error = <span class="built_in">zeros</span>(trainsetCount, outArgc);
-        <span class="keyword">for</span> t = <span class="number">1</span>:trainsetCount
-            <span class="matrix">[predict, layeroutput]</span> = ForwardNetwork(trainInp(t, :), layerOfNeurons, weightCell, biasCell);
-            p(t) = predict;
-            error(t, : ) = predict - trainOut(t, :);
-        <span class="keyword">end</span>
-
-        err(iter) = (sum(<span class="transposed_variable">error.</span>^<span class="number">2</span>)/trainsetCount)^<span class="number">0.5</span>;
-        figure(<span class="number">1</span>);
-        plot(err);
-
-        <span class="comment">%---Stop if reach error threshold</span>
-        <span class="keyword">if</span> err(iter) &lt; errorThreshhold
-            <span class="keyword">break</span>;
-        <span class="keyword">end</span>
-    <span class="keyword">end</span>
-    
-    <span class="comment">%--Test the trained network with a test set</span>
-    testsetCount = <span class="built_in">size</span>(testInp, <span class="number">1</span>);
-    error = <span class="built_in">zeros</span>(testsetCount, outArgc);
-    <span class="keyword">for</span> t = <span class="number">1</span>:testsetCount
-        <span class="matrix">[predict, layeroutput]</span> = ForwardNetwork(testInp(t, :), layerOfNeurons, weightCell, biasCell);
-        p(t) = predict;
-        error(t, : ) = predict - testRealOut(t, :);
-    <span class="keyword">end</span>
-
-    <span class="comment">%---Print predictions</span>
-    fprintf(<span class="string">&apos;Ended with %d iterations.\n&apos;</span>, iter);
-    a = testInp;
-    b = testRealOut;
-    c = <span class="transposed_variable">p&apos;</span>;
-    x1_x2_act_pred_err = <span class="matrix">[a b c c-b]</span>
-
-    <span class="comment">%---Plot Surface of network predictions</span>
-    testInpx1 = <span class="matrix">[-<span class="number">1</span>:<span class="number">0.1</span>:<span class="number">1</span>]</span>;
-    testInpx2 = <span class="matrix">[-<span class="number">1</span>:<span class="number">0.1</span>:<span class="number">1</span>]</span>;
-    <span class="matrix">[X1, X2]</span> = <span class="built_in">meshgrid</span>(testInpx1, testInpx2);
-    testOutRows = <span class="built_in">size</span>(X1, <span class="number">1</span>);
-    testOutCols = <span class="built_in">size</span>(X1, <span class="number">2</span>);
-    testOut = <span class="built_in">zeros</span>(testOutRows, testOutCols);
-    <span class="keyword">for</span> row = <span class="matrix">[<span class="number">1</span>:testOutRows]</span>
-        <span class="keyword">for</span> col = <span class="matrix">[<span class="number">1</span>:testOutCols]</span>
-            test = <span class="matrix">[X1(row, col), X2(row, col)]</span>;
-            <span class="matrix">[out, l]</span> = ForwardNetwork(test, layerOfNeurons, weightCell, biasCell);
-            testOut(row, col) = out;
-        <span class="keyword">end</span>
-    <span class="keyword">end</span>
-    figure(<span class="number">2</span>);
-    surf(X1, X2, testOut);
-
-<span class="keyword">end</span>
-
-<span class="comment">%% BackPropagate: Backpropagate the output through the network and adjust weights and biases</span>
-<span class="function"><span class="keyword">function</span> <span class="params">[weightCell, biasCell]</span> = <span class="title">BackPropagate</span><span class="params">(rate, in, realOutput, sampleTarget, layer, weightCell, biasCell, layerOutputCells)</span></span>
-    layerCount = <span class="built_in">size</span>(layer, <span class="number">2</span>);
-    delta = cell(<span class="number">1</span>, layerCount);
-    D_weight = cell(<span class="number">1</span>, layerCount);
-    D_bias = cell(<span class="number">1</span>, layerCount);
-    <span class="comment">%---From Output layer, it has different formula</span>
-    output = layerOutputCells<span class="cell">{layerCount}</span>;
-    delta<span class="cell">{layerCount}</span> = output .* (<span class="number">1</span>-output) .* (sampleTarget - output);
-    preoutput = layerOutputCells<span class="cell">{layerCount-<span class="number">1</span>}</span>;
-    D_weight<span class="cell">{layerCount}</span> = rate .* <span class="transposed_variable">preoutput&apos;</span> * delta<span class="cell">{layerCount}</span>;
-    D_bias<span class="cell">{layerCount}</span> = rate .* delta<span class="cell">{layerCount}</span>;
-
-    <span class="comment">%---Back propagate for Hidden layers</span>
-    <span class="keyword">for</span> layerIndex = layerCount-<span class="number">1</span>:-<span class="number">1</span>:<span class="number">1</span>
-        output = layerOutputCells<span class="cell">{layerIndex}</span>;
-        <span class="keyword">if</span> layerIndex == <span class="number">1</span>
-            preoutput = in;
-        <span class="keyword">else</span>
-            preoutput = layerOutputCells<span class="cell">{layerIndex-<span class="number">1</span>}</span>;
-        <span class="keyword">end</span>
-
-        weight = weightCell<span class="cell">{layerIndex+<span class="number">1</span>}</span>;
-        sumup = (weight * delta<span class="cell">{layerIndex+<span class="number">1</span>}&apos;</span>)<span class="string">&apos;;
-        delta{layerIndex} = output .* (1 - output) .* sumup;
-
-        D_weight{layerIndex} = rate .* preoutput&apos;</span> * delta<span class="cell">{layerIndex}</span>;
-        D_bias<span class="cell">{layerIndex}</span> = rate .* delta<span class="cell">{layerIndex}</span>;
-    <span class="keyword">end</span>
-    <span class="comment">%---Update weightCell and biasCell</span>
-    <span class="keyword">for</span> layerIndex = <span class="number">1</span>:layerCount
-        weightCell<span class="cell">{layerIndex}</span> = weightCell<span class="cell">{layerIndex}</span> + D_weight<span class="cell">{layerIndex}</span>;
-        biasCell<span class="cell">{layerIndex}</span> = biasCell<span class="cell">{layerIndex}</span> + D_bias<span class="cell">{layerIndex}</span>;
-    <span class="keyword">end</span>
-
-
-<span class="keyword">end</span>
-
-
-<span class="comment">%% ForwardNetwork: Compute feed forward neural network, Return the output and output of each neuron in each layer</span>
-<span class="function"><span class="keyword">function</span> <span class="params">[realOutput, layerOutputCells]</span> = <span class="title">ForwardNetwork</span><span class="params">(in, layer, weightCell, biasCell)</span></span>
-    layerCount = <span class="built_in">size</span>(layer, <span class="number">2</span>);
-    layerOutputCells = cell(<span class="number">1</span>, layerCount);
-
-    out = in;
-    <span class="keyword">for</span> layerIndex = <span class="number">1</span>:layerCount
-        X = out;
-        bias = biasCell<span class="cell">{layerIndex}</span>;
-        out = Sigmoid(X * weightCell<span class="cell">{layerIndex}</span> + bias);
-        layerOutputCells<span class="cell">{layerIndex}</span> = out;
-    <span class="keyword">end</span>
-    realOutput = out;    
-<span class="keyword">end</span>
-</pre></td></tr></table></figure>
+<figure class="highlight MATLAB"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div><div class="line">158</div><div class="line">159</div><div class="line">160</div><div class="line">161</div><div class="line">162</div><div class="line">163</div><div class="line">164</div><div class="line">165</div><div class="line">166</div><div class="line">167</div><div class="line">168</div><div class="line">169</div><div class="line">170</div><div class="line">171</div><div class="line">172</div><div class="line">173</div><div class="line">174</div><div class="line">175</div><div class="line">176</div><div class="line">177</div><div class="line">178</div><div class="line">179</div></pre></td><td class="code"><pre><div class="line">%% BPANN: Artificial Neural Network with Back Propagation</div><div class="line">%% Author: Xuyang Feng</div><div class="line">function  BPANN()</div><div class="line"></div><div class="line">    %---Set training parameters</div><div class="line">    iterations = 5000;</div><div class="line">    errorThreshhold = 0.1;</div><div class="line">    learningRate = 0.5;</div><div class="line">    %---Set hidden layer type, for example: [4, 3, 2]</div><div class="line">    hiddenNeurons = [3 2];</div><div class="line"></div><div class="line">    </div><div class="line">    %---'Xor' training data</div><div class="line">    trainInp = [0 0; 0 1; 1 0; 1 1];</div><div class="line">    trainOut = [0; 1; 1; 0];</div><div class="line">    testInp = trainInp;</div><div class="line">    testRealOut = trainOut;</div><div class="line">    </div><div class="line"></div><div class="line">    % %---'And' training data</div><div class="line">    % trainInp = [1 1; 1 0; 0 1; 0 0];</div><div class="line">    % trainOut = [1; 0; 0; 0];</div><div class="line">    % testInp = trainInp;</div><div class="line">    % testRealOut = trainOut;</div><div class="line"></div><div class="line">    assert(size(trainInp,1)==size(trainOut, 1),...</div><div class="line">        'Counted different sets of input and output.');</div><div class="line"></div><div class="line">    %---Initialize Network attributes</div><div class="line">    inArgc = size(trainInp, 2);</div><div class="line">    outArgc = size(trainOut, 2);</div><div class="line">    trainsetCount = size(trainInp, 1);</div><div class="line">    </div><div class="line">    %---Add output layer</div><div class="line">    layerOfNeurons = [hiddenNeurons, outArgc];</div><div class="line">    layerCount = size(layerOfNeurons, 2);</div><div class="line">    </div><div class="line">    %---Weight and bias random range</div><div class="line">    e = 1;</div><div class="line">    b = -e;</div><div class="line"></div><div class="line">    %---Set initial random weights</div><div class="line">    weightCell = cell(1, layerCount);</div><div class="line">    for i = 1:layerCount</div><div class="line">        if i == 1</div><div class="line">            weightCell{1} = unifrnd(b, e, inArgc,layerOfNeurons(1));</div><div class="line">        else</div><div class="line">            weightCell{i} = unifrnd(b, e, layerOfNeurons(i-1),layerOfNeurons(i));</div><div class="line">        end</div><div class="line">    end</div><div class="line"></div><div class="line">    %---Set initial biases</div><div class="line">    biasCell = cell(1, layerCount);</div><div class="line">    for i = 1:layerCount</div><div class="line">        biasCell{i} = unifrnd(b, e, 1, layerOfNeurons(i));</div><div class="line">    end</div><div class="line"></div><div class="line"></div><div class="line">    %----------------------</div><div class="line">    %---Begin training</div><div class="line">    %----------------------</div><div class="line">    for iter = 1:iterations</div><div class="line">        for i = 1:trainsetCount</div><div class="line">            % choice = randi([1 trainsetCount]);</div><div class="line">            choice = i;</div><div class="line">            sampleIn = trainInp(choice, :);</div><div class="line">            sampleTarget = trainOut(choice, :);</div><div class="line"></div><div class="line">            [realOutput, layerOutputCells] = ForwardNetwork(sampleIn, layerOfNeurons, weightCell, biasCell);</div><div class="line">            [weightCell, biasCell] = BackPropagate(learningRate, sampleIn, realOutput, sampleTarget, layerOfNeurons, ...</div><div class="line">                weightCell, biasCell, layerOutputCells);</div><div class="line">        end</div><div class="line"></div><div class="line">        %plot overall network error at end of each iteration</div><div class="line">        error = zeros(trainsetCount, outArgc);</div><div class="line">        for t = 1:trainsetCount</div><div class="line">            [predict, layeroutput] = ForwardNetwork(trainInp(t, :), layerOfNeurons, weightCell, biasCell);</div><div class="line">            p(t) = predict;</div><div class="line">            error(t, : ) = predict - trainOut(t, :);</div><div class="line">        end</div><div class="line"></div><div class="line">        err(iter) = (sum(error.^2)/trainsetCount)^0.5;</div><div class="line">        figure(1);</div><div class="line">        plot(err);</div><div class="line"></div><div class="line">        %---Stop if reach error threshold</div><div class="line">        if err(iter) &lt; errorThreshhold</div><div class="line">            break;</div><div class="line">        end</div><div class="line">    end</div><div class="line">    </div><div class="line">    %--Test the trained network with a test set</div><div class="line">    testsetCount = size(testInp, 1);</div><div class="line">    error = zeros(testsetCount, outArgc);</div><div class="line">    for t = 1:testsetCount</div><div class="line">        [predict, layeroutput] = ForwardNetwork(testInp(t, :), layerOfNeurons, weightCell, biasCell);</div><div class="line">        p(t) = predict;</div><div class="line">        error(t, : ) = predict - testRealOut(t, :);</div><div class="line">    end</div><div class="line"></div><div class="line">    %---Print predictions</div><div class="line">    fprintf('Ended with %d iterations.\n', iter);</div><div class="line">    a = testInp;</div><div class="line">    b = testRealOut;</div><div class="line">    c = p';</div><div class="line">    x1_x2_act_pred_err = [a b c c-b]</div><div class="line"></div><div class="line">    %---Plot Surface of network predictions</div><div class="line">    testInpx1 = [-1:0.1:1];</div><div class="line">    testInpx2 = [-1:0.1:1];</div><div class="line">    [X1, X2] = meshgrid(testInpx1, testInpx2);</div><div class="line">    testOutRows = size(X1, 1);</div><div class="line">    testOutCols = size(X1, 2);</div><div class="line">    testOut = zeros(testOutRows, testOutCols);</div><div class="line">    for row = [1:testOutRows]</div><div class="line">        for col = [1:testOutCols]</div><div class="line">            test = [X1(row, col), X2(row, col)];</div><div class="line">            [out, l] = ForwardNetwork(test, layerOfNeurons, weightCell, biasCell);</div><div class="line">            testOut(row, col) = out;</div><div class="line">        end</div><div class="line">    end</div><div class="line">    figure(2);</div><div class="line">    surf(X1, X2, testOut);</div><div class="line"></div><div class="line">end</div><div class="line"></div><div class="line">%% BackPropagate: Backpropagate the output through the network and adjust weights and biases</div><div class="line">function [weightCell, biasCell] = BackPropagate(rate, in, realOutput, sampleTarget, layer, weightCell, biasCell, layerOutputCells)</div><div class="line">    layerCount = size(layer, 2);</div><div class="line">    delta = cell(1, layerCount);</div><div class="line">    D_weight = cell(1, layerCount);</div><div class="line">    D_bias = cell(1, layerCount);</div><div class="line">    %---From Output layer, it has different formula</div><div class="line">    output = layerOutputCells{layerCount};</div><div class="line">    delta{layerCount} = output .* (1-output) .* (sampleTarget - output);</div><div class="line">    preoutput = layerOutputCells{layerCount-1};</div><div class="line">    D_weight{layerCount} = rate .* preoutput' * delta{layerCount};</div><div class="line">    D_bias{layerCount} = rate .* delta{layerCount};</div><div class="line"></div><div class="line">    %---Back propagate for Hidden layers</div><div class="line">    for layerIndex = layerCount-1:-1:1</div><div class="line">        output = layerOutputCells{layerIndex};</div><div class="line">        if layerIndex == 1</div><div class="line">            preoutput = in;</div><div class="line">        else</div><div class="line">            preoutput = layerOutputCells{layerIndex-1};</div><div class="line">        end</div><div class="line"></div><div class="line">        weight = weightCell{layerIndex+1};</div><div class="line">        sumup = (weight * delta{layerIndex+1}')';</div><div class="line">        delta{layerIndex} = output .* (1 - output) .* sumup;</div><div class="line"></div><div class="line">        D_weight{layerIndex} = rate .* preoutput' * delta{layerIndex};</div><div class="line">        D_bias{layerIndex} = rate .* delta{layerIndex};</div><div class="line">    end</div><div class="line">    %---Update weightCell and biasCell</div><div class="line">    for layerIndex = 1:layerCount</div><div class="line">        weightCell{layerIndex} = weightCell{layerIndex} + D_weight{layerIndex};</div><div class="line">        biasCell{layerIndex} = biasCell{layerIndex} + D_bias{layerIndex};</div><div class="line">    end</div><div class="line"></div><div class="line"></div><div class="line">end</div><div class="line"></div><div class="line"></div><div class="line">%% ForwardNetwork: Compute feed forward neural network, Return the output and output of each neuron in each layer</div><div class="line">function [realOutput, layerOutputCells] = ForwardNetwork(in, layer, weightCell, biasCell)</div><div class="line">    layerCount = size(layer, 2);</div><div class="line">    layerOutputCells = cell(1, layerCount);</div><div class="line"></div><div class="line">    out = in;</div><div class="line">    for layerIndex = 1:layerCount</div><div class="line">        X = out;</div><div class="line">        bias = biasCell{layerIndex};</div><div class="line">        out = Sigmoid(X * weightCell{layerIndex} + bias);</div><div class="line">        layerOutputCells{layerIndex} = out;</div><div class="line">    end</div><div class="line">    realOutput = out;    </div><div class="line">end</div></pre></td></tr></table></figure>
 ]]></content>
     <summary type="html"><![CDATA[<h3 id="Test_the_program_with_a_data_set">Test the program with a data set</h3>
 <ul>
@@ -855,7 +393,7 @@ System<span class="preprocessor">.out</span><span class="preprocessor">.println<
     <updated>2014-05-06T23:15:42.000Z</updated>
     <content type="html"><![CDATA[<p>This article is a brief introduction of different implementations of floating point operation on an ARM processor.</p>
 <h3 id="1-_Early_ages">1. Early ages</h3>
-<p>There&#x2019;s no coprocessor for floating point operations on ARM, those operations are done by CPU, means of which is called <code>Float Math Emulation</code>. Normally each float point operation costs thousands of cycles, which is very inefficient. </p>
+<p>There’s no coprocessor for floating point operations on ARM, those operations are done by CPU, means of which is called <code>Float Math Emulation</code>. Normally each float point operation costs thousands of cycles, which is very inefficient. </p>
 <h3 id="2-_Soft-float">2. Soft-float</h3>
 <p>This is for those situations where the CPU does not contain a <code>floating point unit(FPU)</code>, which is a built-in coprocessor on CPU to deal with floating point operations. </p>
 <p>There are 2 different ways to do floating point operations without FPU: </p>
@@ -870,21 +408,21 @@ System<span class="preprocessor">.out</span><span class="preprocessor">.println<
 <a id="more"></a>
 
 <h4 id="3-1_VFP">3.1 VFP</h4>
-<p>One of the nice feature VFP provides is that it supports single and double-precision arithmetic on vector-vector, vector-scalar, and scalar-scalar data sets where vectors can consist of up to 8 single-precision, or 4 double-precision elements [4]. The &#x201C;vector mode&#x201D; instructions of VFP is actually sequential, so the speed up is very limited [8]. There&#x2019;s one thing worth mentioning, that the &#x201C;vector mode&#x201D; of VFP is actually deprecated, replaced shortly after its introduce, with the much more powerful NEON Advanced SIMD unit [9]. </p>
+<p>One of the nice feature VFP provides is that it supports single and double-precision arithmetic on vector-vector, vector-scalar, and scalar-scalar data sets where vectors can consist of up to 8 single-precision, or 4 double-precision elements [4]. The “vector mode” instructions of VFP is actually sequential, so the speed up is very limited [8]. There’s one thing worth mentioning, that the “vector mode” of VFP is actually deprecated, replaced shortly after its introduce, with the much more powerful NEON Advanced SIMD unit [9]. </p>
 <p>To use VFP, one need to pass flag <code>-mfloat-abi=softfp</code> or <code>-mfloat-abi=hard</code> to gcc when compiling.</p>
 <h5 id="3-1-1_Difference_between_softfp_and_hard_mode">3.1.1 Difference between <code>softfp</code> and <code>hard</code> mode</h5>
 <ul>
 <li><p>For <code>softfp</code> mode:<br>Using general integer registers to pass values (like the <code>soft</code> mode). It also support linking to <code>soft</code> mode compiled binaris. </p>
 </li>
-<li><p>For <code>hard</code> mode:<br>Using floating point registers on FPU to pass values. Doesn&#x2019;t support linking to <code>soft</code> mode binaris. All codes must be compiled in <code>hard</code> mode. It saves up to 20 cycles when calling a function with fp arguments, therefore faster than <code>softfp</code> mode [6].</p>
+<li><p>For <code>hard</code> mode:<br>Using floating point registers on FPU to pass values. Doesn’t support linking to <code>soft</code> mode binaris. All codes must be compiled in <code>hard</code> mode. It saves up to 20 cycles when calling a function with fp arguments, therefore faster than <code>softfp</code> mode [6].</p>
 </li>
 </ul>
 <p>Nowadays, ARM Linux is set to <code>hard</code> mode by default [3] while Debian Armel set <code>softfp</code> as default [7]. And these two modes are not compatible in one application due to different value passing conventions. </p>
 <p>Besides, <code>-msoft-float</code> equals to <code>-mfloat-abi=soft</code>, so as <code>-mhard-float</code> to <code>-mfloat-abi=hard</code> [8].</p>
 <h4 id="3-2_New_era,_with_Neon">3.2 New era, with Neon</h4>
-<p>The Advanced SIMD extension (aka NEON or &#x201C;MPE&#x201D; Media Processing Engine) is a combined 64- and 128-bit SIMD instruction set that provides standardized acceleration for media and signal processing applications. NEON is included in all Cortex-A8 devices but is optional in Cortex-A9 devices [9]. </p>
+<p>The Advanced SIMD extension (aka NEON or “MPE” Media Processing Engine) is a combined 64- and 128-bit SIMD instruction set that provides standardized acceleration for media and signal processing applications. NEON is included in all Cortex-A8 devices but is optional in Cortex-A9 devices [9]. </p>
 <p>Neon shares the same floating point registers with VFP, and thanks to floating point pipeline technology that Neon supports, it is a lot faster than VFP, but the draw back is that the NEON floating point pipeline is not entirely IEEE-754 compliant[10]. </p>
-<p>Following is quoted from Peter on <a href="http://stackoverflow.com/questions/4097034/arm-cortex-a8-whats-the-difference-between-vfp-and-neon" target="_blank" rel="external">StackOverflow</a>. He&#x2019;s got a good introduction on this.</p>
+<p>Following is quoted from Peter on <a href="http://stackoverflow.com/questions/4097034/arm-cortex-a8-whats-the-difference-between-vfp-and-neon" target="_blank" rel="external">StackOverflow</a>. He’s got a good introduction on this.</p>
 <blockquote>
 <p>Because it is not IEEE-754 compliant, a compiler cannot generate these instructions unless you tell the compiler that you are not interested in full compliance. This can be done in several ways.</p>
 <ol>
@@ -912,7 +450,7 @@ System<span class="preprocessor">.out</span><span class="preprocessor">.println<
 ]]></content>
     <summary type="html"><![CDATA[<p>This article is a brief introduction of different implementations of floating point operation on an ARM processor.</p>
 <h3 id="1-_Early_ages">1. Early ages</h3>
-<p>There&#x2019;s no coprocessor for floating point operations on ARM, those operations are done by CPU, means of which is called <code>Float Math Emulation</code>. Normally each float point operation costs thousands of cycles, which is very inefficient. </p>
+<p>There’s no coprocessor for floating point operations on ARM, those operations are done by CPU, means of which is called <code>Float Math Emulation</code>. Normally each float point operation costs thousands of cycles, which is very inefficient. </p>
 <h3 id="2-_Soft-float">2. Soft-float</h3>
 <p>This is for those situations where the CPU does not contain a <code>floating point unit(FPU)</code>, which is a built-in coprocessor on CPU to deal with floating point operations. </p>
 <p>There are 2 different ways to do floating point operations without FPU: </p>
@@ -942,38 +480,14 @@ System<span class="preprocessor">.out</span><span class="preprocessor">.println<
 <a id="more"></a>
 
 <p>In blog project folder:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre>$ vim <span class="keyword">push</span><span class="preprocessor">.sh</span>
-</pre></td></tr></table></figure><br>add content:<br><br><figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-2
-3
-4
-5
-6
-7
-8
-9
-</pre></td><td class="code"><pre><span class="shebang">#!/bin/bash
-</span>
-hexo generate
-<span class="keyword">if</span> test <span class="operator">-d</span> public/<span class="built_in">source</span>_backup
-<span class="keyword">then</span>
-    rm -rf public/<span class="built_in">source</span>_backup
-<span class="keyword">fi</span>
-cp -r <span class="built_in">source</span>/ public/<span class="built_in">source</span>_backup
-hexo deploy
-</pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ <span class="keyword">vim</span> push.<span class="keyword">sh</span></div></pre></td></tr></table></figure><br>add content:<br><br><figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="shebang">#!/bin/bash</span></div><div class="line"></div><div class="line">hexo generate</div><div class="line"><span class="keyword">if</span> test <span class="operator">-d</span> public/<span class="built_in">source</span>_backup</div><div class="line"><span class="keyword">then</span></div><div class="line">    rm -rf public/<span class="built_in">source</span>_backup</div><div class="line"><span class="keyword">fi</span></div><div class="line">cp -r <span class="built_in">source</span>/ public/<span class="built_in">source</span>_backup</div><div class="line">hexo deploy</div></pre></td></tr></table></figure>
 
 <p>add executable:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre>$ <span class="keyword">chmod</span> +<span class="keyword">x</span> <span class="keyword">push</span>.sh
-</pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ <span class="keyword">chmod</span> +<span class="keyword">x</span> <span class="keyword">push</span>.sh</div></pre></td></tr></table></figure>
 
-<p>This script first generate &#x201C;ready to publish&#x201D; page files, and then check if previous version of source_backup directory exit. If exits, delete it and copy the latest version, then deploy it. <code>hexo deploy</code> command will automatically add everything in public/ folder and commit the changes.</p>
+<p>This script first generate “ready to publish” page files, and then check if previous version of source_backup directory exit. If exits, delete it and copy the latest version, then deploy it. <code>hexo deploy</code> command will automatically add everything in public/ folder and commit the changes.</p>
 <p>Next time use this command to deploy:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre>$ ./<span class="keyword">push</span><span class="preprocessor">.sh</span>
-</pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ ./push.<span class="keyword">sh</span></div></pre></td></tr></table></figure>
 
 <p>Therefore, we have our original <code>.md</code> files safely tracked in GitHub, we can easily make changes to the posts on whatever version in the past you want. You can have the script copied to other directory if you have other Hexo projects, or add them to your <code>.bash_profile</code> script.</p>
 ]]></content>
@@ -993,59 +507,39 @@ hexo deploy
     <published>2014-04-17T15:37:43.000Z</published>
     <updated>2014-05-06T23:16:06.000Z</updated>
     <content type="html"><![CDATA[<h3 id="1-_Install">1. Install</h3>
-<p>Installing OpenCV on Mac can be fairly simple&#x2014;using <code>homebrew</code>, however, <code>homebrew</code> can only install a stable version of it(currently 2.4.8.2). If you want to have a taste of OpenCV3.0, you&#x2019;ll have to build from the source. This sometimes can be very annoying[1][2]. After more than a day&#x2019;s struggle, I find a solution for my machine.</p>
+<p>Installing OpenCV on Mac can be fairly simple—using <code>homebrew</code>, however, <code>homebrew</code> can only install a stable version of it(currently 2.4.8.2). If you want to have a taste of OpenCV3.0, you’ll have to build from the source. This sometimes can be very annoying[1][2]. After more than a day’s struggle, I find a solution for my machine.</p>
 <p>If you have anaconda installed, probably the vtk module has a version of 5.x, but OpenCV3.0 need vtk at least 6.1.[1]</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre><span class="variable">$ </span>brew install vtk   <span class="comment"># This gonna take some time</span>
-</pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ brew <span class="operator"><span class="keyword">install</span> vtk   # This gonna take <span class="keyword">some</span> <span class="keyword">time</span></span></div></pre></td></tr></table></figure>
 
 <p>Now download the latest OpenCV source:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre><span class="variable">$ </span>git clone git<span class="variable">@github</span>.<span class="symbol">com:</span><span class="constant">Itseez</span>/opencv.git
-</pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="variable">$ </span>git clone git<span class="variable">@github</span>.<span class="symbol">com:</span><span class="constant">Itseez</span>/opencv.git</div></pre></td></tr></table></figure>
 
 <p>Go to OpenCV source folder, </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-2
-3
-</pre></td><td class="code"><pre><span class="variable">$ </span>mkdir build
-<span class="variable">$ </span>cd build
-<span class="variable">$ </span>cmake <span class="string">&quot;Unix Makefile&quot;</span> -<span class="constant">D</span> <span class="constant">CMAKE_OSX_ARCHITECTURES</span>=x86_64 -<span class="constant">D</span> <span class="constant">BUILD_PERF_TESTS</span>=<span class="constant">OFF</span> ..
-</pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="variable">$ </span>mkdir build</div><div class="line"><span class="variable">$ </span>cd build</div><div class="line"><span class="variable">$ </span>cmake <span class="string">"Unix Makefile"</span> -<span class="constant">D</span> <span class="constant">CMAKE_OSX_ARCHITECTURES</span>=x86_64 -<span class="constant">D</span> <span class="constant">BUILD_PERF_TESTS</span>=<span class="constant">OFF</span> ..</div></pre></td></tr></table></figure>
 
-<p>Since OpenCV module &#x2018;viz&#x2019; has to be compiled with libc++ instead of libstdc++, we need to make some changes to the makefiles to ensure it is compiled that way.</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-2
-</pre></td><td class="code"><pre><span class="variable">$ </span>cd modules/viz/<span class="constant">CMakeFiles</span>/opencv_viz.dir/
-<span class="variable">$ </span>vim flags.make
-</pre></td></tr></table></figure>
+<p>Since OpenCV module ‘viz’ has to be compiled with libc++ instead of libstdc++, we need to make some changes to the makefiles to ensure it is compiled that way.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ <span class="keyword">cd</span> modules/viz/CMakeFiles/opencv_viz.dir/</div><div class="line">$ <span class="keyword">vim</span> flags.<span class="keyword">make</span></div></pre></td></tr></table></figure>
 
 <p>Add flag <code>-std=c++11 -stdlib=libc++</code><br>Do the same to <code>build/modules/viz/CMakeFiles/opencv_test_viz.dir/flags.make</code><br>Now back to the build folder. </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre><span class="variable">$ </span>make -j8  <span class="comment"># Using 8 threads to build</span>
-</pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ <span class="keyword">make</span> -j8  # Using <span class="number">8</span> threads <span class="keyword">to</span> build</div></pre></td></tr></table></figure>
 
 <p>And it should work fine.<br>Now finish up:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre><span class="variable">$ </span>make install
-</pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ <span class="keyword">make</span> install</div></pre></td></tr></table></figure>
 
 <h3 id="2-_Check">2. Check</h3>
-<p>There&#x2019;re generally 2 ways to check OpenCV&#x2019;s version. </p>
+<p>There’re generally 2 ways to check OpenCV’s version. </p>
 <ol>
 <li><p>In the OpenCV source folder, version number is defined in file:</p>
-<pre><code> modules/core/<span class="built_in">include</span>/opencv2/core/<span class="built_in">version</span>.hpp 
+<pre><code> modules<span class="regexp">/core/i</span>nclude<span class="regexp">/opencv2/</span>core<span class="regexp">/version.hpp </span>
 </code></pre></li>
 <li><p>After <code>make install</code>, you can see the copied libraries, they are usually named with version numbers. Like <code>libopencv_core.3.0.0.dylib</code>.</p>
 </li>
 </ol>
 <p>Also, you can use <code>pkg-config</code> to check if the libs are correctly located.</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre><span class="variable">$pkg</span><span class="attribute">-config</span> <span class="subst">--</span>libs opencv
-</pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="variable">$pkg</span>-config --libs opencv</div></pre></td></tr></table></figure>
 
 <p>The output will look like this:</p>
-<pre><code>/usr/<span class="built_in">local</span>/lib/libopencv_calib3d.dylib /usr/<span class="built_in">local</span>/lib/libopencv_contrib.dylib /usr/<span class="built_in">local</span>/lib/libopencv_core.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cuda.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudaarithm.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudabgsegm.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudafeatures2d.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudafilters.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudaimgproc.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudaoptflow.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudastereo.dylib /usr/<span class="built_in">local</span>/lib/libopencv_cudawarping.dylib /usr/<span class="built_in">local</span>/lib/libopencv_features2d.dylib /usr/<span class="built_in">local</span>/lib/libopencv_flann.dylib /usr/<span class="built_in">local</span>/lib/libopencv_highgui.dylib /usr/<span class="built_in">local</span>/lib/libopencv_imgproc.dylib /usr/<span class="built_in">local</span>/lib/libopencv_legacy.dylib /usr/<span class="built_in">local</span>/lib/libopencv_ml.dylib /usr/<span class="built_in">local</span>/lib/libopencv_nonfree.dylib /usr/<span class="built_in">local</span>/lib/libopencv_objdetect.dylib /usr/<span class="built_in">local</span>/lib/libopencv_optim.dylib /usr/<span class="built_in">local</span>/lib/libopencv_photo.dylib /usr/<span class="built_in">local</span>/lib/libopencv_shape.dylib /usr/<span class="built_in">local</span>/lib/libopencv_softcascade.dylib /usr/<span class="built_in">local</span>/lib/libopencv_stitching.dylib /usr/<span class="built_in">local</span>/lib/libopencv_superres.dylib /usr/<span class="built_in">local</span>/lib/libopencv_ts.<span class="operator">a</span> /usr/<span class="built_in">local</span>/lib/libopencv_video.dylib /usr/<span class="built_in">local</span>/lib/libopencv_videostab.dylib /usr/<span class="built_in">local</span>/lib/libopencv_viz.dylib
+<pre><code><span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_calib3d.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_contrib.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_core.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cuda.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudaarithm.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudabgsegm.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudafeatures2d.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudafilters.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudaimgproc.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudaoptflow.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudastereo.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudawarping.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_features2d.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_flann.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_highgui.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_imgproc.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_legacy.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_ml.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_nonfree.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_objdetect.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_optim.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_photo.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_shape.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_softcascade.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_stitching.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_superres.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_ts.a <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_video.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_videostab.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_viz.dylib
 </code></pre><h3 id="3-_Reference:">3. Reference:</h3>
 <p>[1] <a href="http://code.opencv.org/issues/3582" target="_blank" rel="external">http://code.opencv.org/issues/3582</a><br>[2] <a href="http://stackoverflow.com/questions/19671827/opencv-installation-on-mac-os-x" target="_blank" rel="external">http://stackoverflow.com/questions/19671827/opencv-installation-on-mac-os-x</a><br>[3] <a href="http://ibivanchev.blogspot.be/2013/10/opencv-mac-os-x-109.html" target="_blank" rel="external">http://ibivanchev.blogspot.be/2013/10/opencv-mac-os-x-109.html</a></p>
 ]]></content>

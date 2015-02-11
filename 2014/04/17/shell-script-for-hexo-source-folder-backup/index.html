@@ -113,38 +113,14 @@
 <a id="more"></a>
 
 <p>In blog project folder:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre>$ vim <span class="keyword">push</span><span class="preprocessor">.sh</span>
-</pre></td></tr></table></figure><br>add content:<br><br><figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-2
-3
-4
-5
-6
-7
-8
-9
-</pre></td><td class="code"><pre><span class="shebang">#!/bin/bash
-</span>
-hexo generate
-<span class="keyword">if</span> test <span class="operator">-d</span> public/<span class="built_in">source</span>_backup
-<span class="keyword">then</span>
-    rm -rf public/<span class="built_in">source</span>_backup
-<span class="keyword">fi</span>
-cp -r <span class="built_in">source</span>/ public/<span class="built_in">source</span>_backup
-hexo deploy
-</pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ <span class="keyword">vim</span> push.<span class="keyword">sh</span></div></pre></td></tr></table></figure><br>add content:<br><br><figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="shebang">#!/bin/bash</span></div><div class="line"></div><div class="line">hexo generate</div><div class="line"><span class="keyword">if</span> test <span class="operator">-d</span> public/<span class="built_in">source</span>_backup</div><div class="line"><span class="keyword">then</span></div><div class="line">    rm -rf public/<span class="built_in">source</span>_backup</div><div class="line"><span class="keyword">fi</span></div><div class="line">cp -r <span class="built_in">source</span>/ public/<span class="built_in">source</span>_backup</div><div class="line">hexo deploy</div></pre></td></tr></table></figure>
 
 <p>add executable:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre>$ <span class="keyword">chmod</span> +<span class="keyword">x</span> <span class="keyword">push</span>.sh
-</pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ <span class="keyword">chmod</span> +<span class="keyword">x</span> <span class="keyword">push</span>.sh</div></pre></td></tr></table></figure>
 
-<p>This script first generate &#x201C;ready to publish&#x201D; page files, and then check if previous version of source_backup directory exit. If exits, delete it and copy the latest version, then deploy it. <code>hexo deploy</code> command will automatically add everything in public/ folder and commit the changes.</p>
+<p>This script first generate “ready to publish” page files, and then check if previous version of source_backup directory exit. If exits, delete it and copy the latest version, then deploy it. <code>hexo deploy</code> command will automatically add everything in public/ folder and commit the changes.</p>
 <p>Next time use this command to deploy:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre>1
-</pre></td><td class="code"><pre>$ ./<span class="keyword">push</span><span class="preprocessor">.sh</span>
-</pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ ./push.<span class="keyword">sh</span></div></pre></td></tr></table></figure>
 
 <p>Therefore, we have our original <code>.md</code> files safely tracked in GitHub, we can easily make changes to the posts on whatever version in the past you want. You can have the script copied to other directory if you have other Hexo projects, or add them to your <code>.bash_profile</code> script.</p>
 
@@ -182,7 +158,7 @@ hexo deploy
     <div class="footer">
         <div class="alignleft">
   
-	  2014 &copy; Hugo Feng,
+	  2015 &copy; Hugo Feng,
   
   All rights reserved. Powered by <a href="http://zespia.tw/hexo/" title="Hexo">Hexo</a>. Hosted on <a href="https://github.com/HugoFeng/hugofeng.github.io" title="GitHub">GitHub</a>.
 </div>
@@ -222,5 +198,35 @@ var disqus_shortname = 'hugofeng';
 
 
 
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 </body>
 </html>

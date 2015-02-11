@@ -109,7 +109,7 @@
       
         <p>This article is a brief introduction of different implementations of floating point operation on an ARM processor.</p>
 <h3 id="1-_Early_ages">1. Early ages</h3>
-<p>There&#x2019;s no coprocessor for floating point operations on ARM, those operations are done by CPU, means of which is called <code>Float Math Emulation</code>. Normally each float point operation costs thousands of cycles, which is very inefficient. </p>
+<p>There’s no coprocessor for floating point operations on ARM, those operations are done by CPU, means of which is called <code>Float Math Emulation</code>. Normally each float point operation costs thousands of cycles, which is very inefficient. </p>
 <h3 id="2-_Soft-float">2. Soft-float</h3>
 <p>This is for those situations where the CPU does not contain a <code>floating point unit(FPU)</code>, which is a built-in coprocessor on CPU to deal with floating point operations. </p>
 <p>There are 2 different ways to do floating point operations without FPU: </p>
@@ -124,21 +124,21 @@
 <a id="more"></a>
 
 <h4 id="3-1_VFP">3.1 VFP</h4>
-<p>One of the nice feature VFP provides is that it supports single and double-precision arithmetic on vector-vector, vector-scalar, and scalar-scalar data sets where vectors can consist of up to 8 single-precision, or 4 double-precision elements [4]. The &#x201C;vector mode&#x201D; instructions of VFP is actually sequential, so the speed up is very limited [8]. There&#x2019;s one thing worth mentioning, that the &#x201C;vector mode&#x201D; of VFP is actually deprecated, replaced shortly after its introduce, with the much more powerful NEON Advanced SIMD unit [9]. </p>
+<p>One of the nice feature VFP provides is that it supports single and double-precision arithmetic on vector-vector, vector-scalar, and scalar-scalar data sets where vectors can consist of up to 8 single-precision, or 4 double-precision elements [4]. The “vector mode” instructions of VFP is actually sequential, so the speed up is very limited [8]. There’s one thing worth mentioning, that the “vector mode” of VFP is actually deprecated, replaced shortly after its introduce, with the much more powerful NEON Advanced SIMD unit [9]. </p>
 <p>To use VFP, one need to pass flag <code>-mfloat-abi=softfp</code> or <code>-mfloat-abi=hard</code> to gcc when compiling.</p>
 <h5 id="3-1-1_Difference_between_softfp_and_hard_mode">3.1.1 Difference between <code>softfp</code> and <code>hard</code> mode</h5>
 <ul>
 <li><p>For <code>softfp</code> mode:<br>Using general integer registers to pass values (like the <code>soft</code> mode). It also support linking to <code>soft</code> mode compiled binaris. </p>
 </li>
-<li><p>For <code>hard</code> mode:<br>Using floating point registers on FPU to pass values. Doesn&#x2019;t support linking to <code>soft</code> mode binaris. All codes must be compiled in <code>hard</code> mode. It saves up to 20 cycles when calling a function with fp arguments, therefore faster than <code>softfp</code> mode [6].</p>
+<li><p>For <code>hard</code> mode:<br>Using floating point registers on FPU to pass values. Doesn’t support linking to <code>soft</code> mode binaris. All codes must be compiled in <code>hard</code> mode. It saves up to 20 cycles when calling a function with fp arguments, therefore faster than <code>softfp</code> mode [6].</p>
 </li>
 </ul>
 <p>Nowadays, ARM Linux is set to <code>hard</code> mode by default [3] while Debian Armel set <code>softfp</code> as default [7]. And these two modes are not compatible in one application due to different value passing conventions. </p>
 <p>Besides, <code>-msoft-float</code> equals to <code>-mfloat-abi=soft</code>, so as <code>-mhard-float</code> to <code>-mfloat-abi=hard</code> [8].</p>
 <h4 id="3-2_New_era,_with_Neon">3.2 New era, with Neon</h4>
-<p>The Advanced SIMD extension (aka NEON or &#x201C;MPE&#x201D; Media Processing Engine) is a combined 64- and 128-bit SIMD instruction set that provides standardized acceleration for media and signal processing applications. NEON is included in all Cortex-A8 devices but is optional in Cortex-A9 devices [9]. </p>
+<p>The Advanced SIMD extension (aka NEON or “MPE” Media Processing Engine) is a combined 64- and 128-bit SIMD instruction set that provides standardized acceleration for media and signal processing applications. NEON is included in all Cortex-A8 devices but is optional in Cortex-A9 devices [9]. </p>
 <p>Neon shares the same floating point registers with VFP, and thanks to floating point pipeline technology that Neon supports, it is a lot faster than VFP, but the draw back is that the NEON floating point pipeline is not entirely IEEE-754 compliant[10]. </p>
-<p>Following is quoted from Peter on <a href="http://stackoverflow.com/questions/4097034/arm-cortex-a8-whats-the-difference-between-vfp-and-neon" target="_blank" rel="external">StackOverflow</a>. He&#x2019;s got a good introduction on this.</p>
+<p>Following is quoted from Peter on <a href="http://stackoverflow.com/questions/4097034/arm-cortex-a8-whats-the-difference-between-vfp-and-neon" target="_blank" rel="external">StackOverflow</a>. He’s got a good introduction on this.</p>
 <blockquote>
 <p>Because it is not IEEE-754 compliant, a compiler cannot generate these instructions unless you tell the compiler that you are not interested in full compliance. This can be done in several ways.</p>
 <ol>
@@ -198,7 +198,7 @@
     <div class="footer">
         <div class="alignleft">
   
-	  2014 &copy; Hugo Feng,
+	  2015 &copy; Hugo Feng,
   
   All rights reserved. Powered by <a href="http://zespia.tw/hexo/" title="Hexo">Hexo</a>. Hosted on <a href="https://github.com/HugoFeng/hugofeng.github.io" title="GitHub">GitHub</a>.
 </div>
@@ -238,5 +238,35 @@ var disqus_shortname = 'hugofeng';
 
 
 
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 </body>
 </html>

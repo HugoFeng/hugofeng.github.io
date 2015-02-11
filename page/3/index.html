@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   
-  <title>Page 2 | Archives 2014 | Flight log</title>
+  <title>Page 3 | Flight log</title>
   <meta name="author" content="Hugo Feng">
   
   <meta name="description" content="About code, machine learning, and life">
@@ -78,127 +78,7 @@
     <div class="row">
         <!--Body content-->
 		
-
-<h2 class="archive-head">2014</h3>
-
-
-    
-        <article class="post">
-  
-    <div class="gallery">
-  <div class="photoset">
-    
-      <img src="">
-    
-  </div>
-  <div class="control">
-    <div class="prev"></div>
-    <div class="next"></div>
-  </div>
-</div>
-  
-  <div class="post-content">
-    <div class="header">
-      
-  
-    <h2 class="title_link"><a href="/2014/04/25/float-operations-on-arm/">Floating point operations on ARM processor</a>
-        <small>
-            <time datetime="2014-04-25T19:32:34.000Z">Apr 25 2014</time>
-        </small>
-    </h2>
-  
-
-
-    </div>
-
-    <div class="entry">
-      
-        <p>This article is a brief introduction of different implementations of floating point operation on an ARM processor.</p>
-<h3 id="1-_Early_ages">1. Early ages</h3>
-<p>There’s no coprocessor for floating point operations on ARM, those operations are done by CPU, means of which is called <code>Float Math Emulation</code>. Normally each float point operation costs thousands of cycles, which is very inefficient. </p>
-<h3 id="2-_Soft-float">2. Soft-float</h3>
-<p>This is for those situations where the CPU does not contain a <code>floating point unit(FPU)</code>, which is a built-in coprocessor on CPU to deal with floating point operations. </p>
-<p>There are 2 different ways to do floating point operations without FPU: </p>
-<ol>
-<li><p>The kernel will trap all the opcodes related to the FPU and then perform the calculations itself [1]. This is called <code>NWFPE</code> (NetWinder Floating Point Emulator), however, this has now been removed from ARM kernel [2]. As I mentioned before, this is the old fashioned way of implementation, which involves raising of invalid instruction exceptions each time the situation occurs [3]. And this can be very expensive for computation. </p>
-</li>
-<li><p>All floating point operations are translated to specific inline function calls by compiler. This is done by passing flag <code>-mfloat-abi=soft</code> when using <code>gcc</code>, and gcc will use built in software(library) to emulate.</p>
-</li>
-</ol>
-<h3 id="3-_Hard-float">3. Hard-float</h3>
-<p>Nowadays, many chips has hardware <code>FPU</code> support to accelerate fp operations, for ARM familis, this unit is often called <code>VFP</code> (Vector Floating-Point coprocessor). VFP is a fully IEEE-754 compatible floating point unit. But later a much more powerful NEON Advanced SIMD unit was introduced and is suggested instead of VFP by Architecture Reference Manual.</p>
-
-      
-    </div>
-
-	
-		
-			<a href="/2014/04/25/float-operations-on-arm/#more" class="more-link">Read More</a>
-		
-	
-
-	<hr/>
-
-	
-  </div>
-</article>
-
-
-
-    
-        <article class="post">
-  
-    <div class="gallery">
-  <div class="photoset">
-    
-      <img src="">
-    
-  </div>
-  <div class="control">
-    <div class="prev"></div>
-    <div class="next"></div>
-  </div>
-</div>
-  
-  <div class="post-content">
-    <div class="header">
-      
-  
-    <h2 class="title_link"><a href="/2014/04/17/shell-script-for-hexo-source-folder-backup/">Shell Script for Hexo source folder backup</a>
-        <small>
-            <time datetime="2014-04-17T18:45:20.000Z">Apr 17 2014</time>
-        </small>
-    </h2>
-  
-
-
-    </div>
-
-    <div class="entry">
-      
-        <p><a href="http://hexo.io" target="_blank" rel="external">Hexo</a> is a very good tool to generate blog pages from mardown files, and it is more comvinient together with Github. But everytime I deploy a new post to Github using <code>hexo deploy</code>, it only commits generated .html files to the repo. </p>
-<p>Those original <code>.md</code> articles however seems very important to me for revising contents in the future, and it would be troublesome if those <code>.md</code> files were somehow lost. </p>
-<p>In order to keep them save and track my every changes, I decide to find a way to put them altogether in the repo with the deployed .html files. So I wrote a shell script the achieve this.</p>
-
-      
-    </div>
-
-	
-		
-			<a href="/2014/04/17/shell-script-for-hexo-source-folder-backup/#more" class="more-link">Read More</a>
-		
-	
-
-	<hr/>
-
-	
-  </div>
-</article>
-
-
-
-    
-        <article class="post">
+  <article class="post">
   
     <div class="gallery">
   <div class="photoset">
@@ -280,15 +160,99 @@
 
 
 
-    
-    <nav id="pagination">
+
+
+
+	<nav id="pagination">
   
-    <a href="/archives/2014/" class="alignleft prev">Prev</a>
+    <a href="/page/2/" class="alignleft prev">Prev</a>
   
   
   <div class="clearfix"></div>
 </nav>
+ 
 
+
+
+	<!--Sidebar content-->
+	<div class="sidebar">
+		
+<div class="container">
+
+
+
+
+	
+		<div class="col-xs-12 col-sm-6">
+	
+  	    
+<div class="widget tag">
+  <h3 class="title">Recent Posts</h3>
+  <ul class="entry">
+    
+      <li>
+        <a href="/2015/01/08/optimizing-cnn-with-opencl/">Optimizing Pattern Inference of Convolutional Neural Network with OpenCL</a>
+      </li>
+    
+      <li>
+        <a href="/2014/08/28/java8_lambda_stream/">Lambda and Stream in Java 8</a>
+      </li>
+    
+      <li>
+        <a href="/2014/08/18/Auto_Timestamp/">Fast Copying Timestamp on Mac</a>
+      </li>
+    
+      <li>
+        <a href="/2014/06/05/bp_ann_in_matlab/">An implementation of Neural Network with Back Propagation in MATLAB</a>
+      </li>
+    
+      <li>
+        <a href="/2014/04/25/float-operations-on-arm/">Floating point operations on ARM processor</a>
+      </li>
+    
+      <li>
+        <a href="/2014/04/17/shell-script-for-hexo-source-folder-backup/">Shell Script for Hexo source folder backup</a>
+      </li>
+    
+      <li>
+        <a href="/2014/04/17/Compile OpenCV3.0 on OSX/">Compile OpenCV 3.0 on OSX</a>
+      </li>
+    
+  </ul>
+</div>
+
+
+  	</div>
+
+	
+		<div class="col-xs-12 col-sm-3">
+	
+  	    
+<div class="widget tagcloud">
+  <h3 class="title">Tag Cloud</h3>
+  <div class="entry">
+    <a href="/tags/ML/" style="font-size: NaNpx;">ML</a><a href="/tags/Mac-shell/" style="font-size: NaNpx;">Mac shell</a><a href="/tags/OpenCL-CNN/" style="font-size: NaNpx;">OpenCL CNN</a><a href="/tags/embedded/" style="font-size: NaNpx;">embedded</a><a href="/tags/hexo/" style="font-size: NaNpx;">hexo</a><a href="/tags/java/" style="font-size: NaNpx;">java</a><a href="/tags/opencv/" style="font-size: NaNpx;">opencv</a>
+  </div>
+</div>
+
+  	</div>
+
+	
+		<div class="col-xs-12 col-sm-3">
+	
+  	    <div class="widget tag">
+	<h3 class="title">Links</h3>
+	<ul class="entry">
+		<li><a href="http://wilbeibi.com/" target="_blank">Wilbeibi's Blog</a></li>
+	</ul>
+</div>
+
+  	</div>
+
+
+</div>
+
+	</div>
 
 
     </div>
