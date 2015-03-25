@@ -101,9 +101,9 @@
     <div class="header">
       
   
-    <h2 class="title_link"><a href="/2015/01/08/optimizing-cnn-with-opencl/">Optimizing Pattern Inference of Convolutional Neural Network with OpenCL</a>
+    <h2 class="title_link"><a href="/2015/03/25/leetcode-03/">leetcode_03 Longest Substring Without Repeating Characters</a>
         <small>
-            <time datetime="2015-01-08T08:31:15.000Z">Jan 8 2015</time>
+            <time datetime="2015-03-25T20:10:55.000Z">Mar 25 2015</time>
         </small>
     </h2>
   
@@ -113,133 +113,121 @@
 
     <div class="entry">
       
-        <h3 id="1-_Introduction">1. Introduction</h3>
-<p>As a supervised approach of Deep Learning, Convolutional Neural Network is famous for its noise robustness and translation invariances. It has been widely used to recognize all kinds of patterns, such as hand written digits and human faces. Although Convolutional Neural Network has greatly reduced the computation, comparing with a traditional neural network with the same amount of connections, there still remains a lot of space for parallel optimizations.</p>
-<p>Here we introduce an implementation of parallelized LeNet-5 inference with OpenCL. The code for this project is hosted on <a href="https://github.com/HugoFeng/convnet" target="_blank" rel="external">https://github.com/HugoFeng/convnet</a> .</p>
-<h3 id="2-_Pattern_Inference_of_Convolutional_Neural_Network">2. Pattern Inference of Convolutional Neural Network</h3>
-<p>We are using LeNet-5, the most famous CNN architecture introduced by Yann LeCun, for pattern inference and training. The test dataset is the MNIST dataset, which contains a total of 70000 hand written digit images. Since we only consider optimizing the inference (feed forward stage) of the network, the training stage will not be mentioned.</p>
-<p><img src="/img/cnn_overview.png" alt="LeNet-5 (modified)"></p>
-<p>Above is an illustration of LeNet-5 (has been slightly modified). It has 3 convolution layers (C1, C3, C5), 2 subsampling layers (S2, S4) , 1 fully connected layer (F6) and 1 output layer.</p>
-<p>In traditional neural networks, nodes of every layer are presented as a “flat” 1-D array, and nodes from the adjacent layers are fully connected. But in convolutional networks, nodes in Convolution Layer and Subsampling Layer are given “2D+1D” representations (although stored in 1-D array as well). That means each of these layers, has several “feature maps”, in each “feature map”, nodes are organized in a 2D images fashion, in other words, each node in a layer is identified by (column index, row index, feature map index). </p>
-<p>Connections between a Convolution Layer and Subsampling Layer do not cross over, for example, each feature map in S2 only connects to its corresponding feature map in C1, and it sub-samples the feature maps in C1 with 2<em>2 to 1 with a “max” function. In the process of sub-sampling, the same 2</em>2 weight array is used over the input with respect to each feature map. </p>
-<p><img src="/img/cnn_activation.png" alt="Activation"></p>
-<p>Connections between a Subsampling Layer and a following Convolution Layer is more complicated.  As is shown above, each feature map in Convolution Layer is related to inputs from the areas of the same position in several feature maps. In the original definition of LeNet-5, the corresponding input feature map is not all of the maps but only some of them which may refer to a table given by Yann LeCun, but here we choose to connect all the input feature maps for simplicity.</p>
-<p>The Fully connected Layer is flat as traditional neural networks are, and it has fully connection with the input Convolution Network.</p>
-<p>The Output layer has 10 output nodes, and each node represents a label, which is one of the 10 digits. And the inference is computed as the node label with the largest output value.</p>
-<h3 id="3-_Performance_Analysis_of_serial_implementation">3. Performance Analysis of serial implementation</h3>
-<h4 id="3-1_Hardware_Specs">3.1 Hardware Specs</h4>
-<p>CPU Name: Intel Core i5-4250U Processor<br>Number of Cores: 2<br>Number of Threads: 4<br>Processor Base Frequency:  1.3 GHz<br>Max Turbo Frequency:  2.6 GHz<br>Number of Memory Channels: 2<br>Max Memory Bandwidth: 25.6 GB/s</p>
-<h4 id="3-2_Profiling">3.2 Profiling</h4>
-<p>Test with inference 100 samples:</p>
-<p><img src="/img/cnn_test1.png" alt="Test1"></p>
-<p>It is very obvious that the <code>forward</code> method of Class <code>ConvolutionalLayer</code> is consuming 49562/50169 = 98.79% of <code>test</code> function call’s time. So working on optimizing the method <code>forward</code> in class <code>ConvolutionalLayer</code> is the best choice.</p>
-<h3 id="4-_Performance_Analysis_of_parallel_optimization">4. Performance Analysis of parallel optimization</h3>
-<h4 id="4-1_Hardware_Specs">4.1 Hardware Specs</h4>
-<p>The first device is called Intel(R) HD Graphics 5000<br>There is a read-write cache<br>The global mem cache size is 2097152<br>The local memory size is 65536<br>The maximum work group size is: 512<br>The maximum number of dimensions is: 3<br>The maximum number of items in dimension 0 is 512<br>The maximum number of items in dimension 1 is 512<br>The maximum number of items in dimension 2 is 512</p>
-<p>Number of compute units:       40<br>Clock frequency in MHz :       200(lowest), 1000(highest)<br>Max amount of memory in bytes: 373712486<br>Memory Type:        DDR3<br>Bus Width:  128 Bit<br>Memory Bandwidth: 25.6 GB/s<br>Floating-point performance:     704 GFLOPS</p>
-<h3 id="5-_Strategies_of_Optimizations">5. Strategies of Optimizations</h3>
-<p>As has been discussed above, the most time consuming function is <code>forward</code> in class <code>ConvolutionalLayer</code>. So our goal is to minimize the time cost by this function.</p>
-<p>In my project, I have implemented 3 different approaches for parallelizing the <code>forward</code> method in class <code>ConvolutionalLayer</code>. </p>
-<ul>
-<li><p>forward_parallel: accepts one input samples at a time, which is the same as the CPU serial version. It hides all OpenCL implementations inside this function, so that codes in all the classes don’t have to make any change to be compatible with is parallelized function. User can use a macro <code>GPU</code> to switch between the original CPU <code>forward</code> implementation and the GPU “forward_parallel”.</p>
-<ul>
-<li>Lack of parallel data access: The number and topology of work items is defined by the problem, which means we cannot increase work items.</li>
-</ul>
-</li>
-</ul>
-<p><img src="/img/cnn_topo1.png" alt="Topology of Work items1"></p>
-<ul>
-<li><p>forward_batch: accepts a batch of input samples at once, and codes in other classes are modified slightly to work with the batch operation. </p>
-<ul>
-<li>The problem size of each kernel can be increased by changing the batch size.</li>
-</ul>
-</li>
-</ul>
-<p><img src="/img/cnn_topo2.png" alt="Topology of Work items2"></p>
-<ul>
-<li>forward_batch_more: acts like <code>forward_batch</code>, but each thread works for output node in several samples at the same location. As is shown below, each work item works for 2 nodes at the same location but within 2 different samples. Since nodes at the same location belonging to different samples of a batch are sharing the same set of weights, so each item will only need to load one set of weights for the inputs and applied them on the inputs of several batches. By doing so, it saves bandwidth and increases the Computational Intensity for a certain amount. Furthermore, the convolution procedure is re-coded together with the iteration of loading the input sub-matrix into private registers, so that the convolution is computed during the loading, which saves one inner loop per input per sample per output node. And the number of samples one item should deal with is defined as a macro <code>THREAD_TASKS</code>, which can be changed.</li>
-</ul>
-<p><img src="/img/cnn_topo3.png" alt="Topology of Work items3"></p>
-<h4 id="5-1_Roofline_model_Analysis">5.1 Roofline model Analysis</h4>
-<ol>
-<li><p>“forward_parallel”: </p>
-<p>a) CI = 2.625</p>
-<p>b) Peak performance = 2.625 * 25.6 = 67.2 GFLOPS</p>
-</li>
-<li><p>“forward_batch”: </p>
-<p>a) CI = 3.2</p>
-<p>b) Peak performance = 3.2 * 25.6 = 81.92 GFLOPS</p>
-</li>
-<li><p>“forward_batch_more”: </p>
-<p>a) <span>$CI = \frac{9⁄T+15.8}{1⁄T+1⁄(indepth*25)+1} * \frac{1}{4} < 3.95$</span>, (T=THREAD_TASKS, as the node/batch numbers a work item should deal with)</p>
-<p>b) Peak performance = 3.95 * 25.6 = 101.12 GFLOPS </p>
-</li>
-</ol>
-<p><img src="/img/cnn_roofline.png" alt="Roofline model"></p>
-<p>Since the first implementation has a low computational intensity and fell into memory bandwidth limitation, I designed the second and the third implementation trying to raise the computational intensity, but a CI of 3.7 is so far the best I can get while a CI of 3.95 is theoretically reachable with an infinitely large T (THREAD_TASKS). It’s still far from CI of 27.5, which will get rid of memory bandwidth limitations.</p>
-<h3 id="6-_Profiling_the_kernels">6. Profiling the kernels</h3>
-<p>We choose the second Convolution Layer to profile, which has the following parameters:</p>
-<ul>
-<li><p>Input depth: 6, height: 14, width: 14</p>
-</li>
-<li><p>Output depth: 16, height: 10, width: 10</p>
-</li>
-</ul>
-<p><img src="/img/cnn_table.png" alt="Profile result"></p>
-<p><img src="/img/cnn_best.png" alt="Time &amp; speed up"></p>
-<p>The first implementation, <code>forward_parallel</code>, operates on one sample per kernel, and it maps each work item to each output pixel, so the number of work items the kernel launches is limited by the size of the output feature maps.</p>
-<p>In order to raise the number of threads each kernel launches and make the kernel scalable, the second implementation is designed. It groups a certain amount of samples together as a batch. Therefore, multiple samples can be computed with a single kernel launch, and according to the batch size, the thread number can be greatly increased. By doing so, the kernel has raised the speed up from 47.61 to 63.3, which is not dramatic since the actual work of each work item remains the same.</p>
-<p>In the third implementation, the work of each work item is modified so that each work item can work on multiple samples. And since each work item works on the pixel of the same location of each sample, the pixels share the same set of weight matrix. So each work item only need to load the weight matrix once and it is loaded to the private memory. </p>
-<p><img src="/img/cnn_time_kernel.png" alt="kernel time"></p>
-<p>By saving bandwidth loading weights, <code>forward_batch_more</code> kernel can gain a speed up of approximately 2 times comparing to <code>forward_batch</code> kernel.</p>
-<p><img src="/img/cnn_time_kernel_t.png" alt="kernel time w.r.t. THREAD_TASKS"></p>
-<p>However, by increasing the THREAD_TASKS, which is the number of samples each work item works on, the work load of each work item is also increased. Due to the pool performance of the cores on GPU, adding too much serial work load on each thread is not a good idea. Experiments shows that with <code>THREAD_TASKS</code> set to 3, which means each work item works on 3 samples, the kernel can reach the best performance on the problem set of the second Convolutional Layer.</p>
-<p>Besides, whether using <code>forward_batch</code> or <code>forward_batch_more</code> kernel, there doesn’t seem to be much difference when considering the whole task, say testing the inference with 1000 samples with the feed forward convolutional neural network. Instead, batch size seems to have more influence than the kernels themselves.</p>
-<p><img src="/img/cnn_time_sample.png" alt="time and sample"></p>
-<p>Profiling the whole program shows why this would happen. Using “Performance and Diagnose” tool in Visual Studio 2013, it tells how much time is spent on each function, but it is worth to point out that using this tool requires target to be built with <code>Debug</code> schema, instead of <code>Release</code> schema with which the previous analysis is tested. So the exact time reported here might be not accurate and trustworthy, but the percentage data is useful. </p>
-<p><img src="/img/cnn_test2.png" alt="test2"></p>
-<p>By profiling the task of testing 1000 samples, it shows that with the power of GPU, the function that calls OpenCL kernel only counts a very small part of the whole time consumption, while the <code>forward_batch</code> functions in class <code>FullyConnectedLayer</code> and class <code>MaxpoolingLayer</code> is taking most of the time. This explains why there doesn’t seem to be a difference changing the kernel. On the other hand, this indicates that on top of the speed up we have achieved, if the <code>forward_batch</code> function of the other 2 layers are optimized, more speed up is still possible.</p>
-<p><img src="/img/cnn_time_all.png" alt="time all"></p>
-<p>Back to the whole picture, built with <code>Release</code> schema, code with OpenCL implementation runs a lot faster than the serial-only code, which gains a speed up of 34215/293.4 = 116.6 times.</p>
-<h3 id="7-_Conclusion">7. Conclusion</h3>
-<p>This report introduced three implementations of optimizing the inference part of a Convolutional Neural Network with OpenCL technology. The speed up of the specific function (function <code>forward</code>) reached 151.78 times while the speed up of the whole inference process reached 116.6 times. </p>
-<hr>
-<h3 id="Appendix">Appendix</h3>
-<h4 id="Setting_up_the_project">Setting up the project</h4>
-<p>Requirements: </p>
-<ul>
-<li>Visual Studio 2013, Xcode, or Visual Studio 2012 ( need to add some extra code ). VS2010 is not supported.</li>
-<li>Git</li>
-<li>Boost library ( only need header files, not binaries)</li>
-<li>MNIST dataset ( will be attached with the code)</li>
-</ul>
-<p>1)  Clone the <code>opencl_support</code> branch and <code>profile-parallel</code> of the repo on <a href="https://github.com/HugoFeng/convnet" target="_blank" rel="external">https://github.com/HugoFeng/convnet</a>, or just unzip my attachment zip file.</p>
-<ul>
-<li>git clone <a href="https://github.com/HugoFeng/convnet.git" target="_blank" rel="external">https://github.com/HugoFeng/convnet.git</a></li>
-<li>git checkout profile-parallel origin/profile-parallel</li>
-</ul>
-<p>2)  In the <code>convnet/convnet/</code> directory, if file <code>settings.h</code> doesn’t exits, you need to create it manually, and add the following snippet to it. (Change the directories to your own path)</p>
-<figure class="highlight C"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="preprocessor">#<span class="keyword">define</span> GPU</span></div><div class="line"><span class="comment">//#define PROFILING</span></div><div class="line"><span class="comment">//#define SIMPLE_PARALLEL</span></div><div class="line"><span class="comment">//#define BATCH_MORE</span></div><div class="line"><span class="preprocessor">#<span class="keyword">define</span> THREAD_TASKS 3</span></div><div class="line"><span class="comment">//#define CHECK_RESULT</span></div><div class="line"><span class="preprocessor">#<span class="keyword">define</span> DATA_PATH "E:/code/data/mnist/"</span></div><div class="line"><span class="preprocessor">#<span class="keyword">define</span> KERNEL_PATH "E:/code/cpp/convnet/convnet/kernels.ocl"</span></div></pre></td></tr></table></figure>
+        <p><a href="https://leetcode.com/problems/longest-substring-without-repeating-characters/" target="_blank" rel="external">leetcode problem site</a></p>
+<figure class="highlight C++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="keyword">class</span> Solution {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="keyword">int</span> lengthOfLongestSubstring(<span class="built_in">string</span> s) {</div><div class="line">        <span class="keyword">int</span> length = s.length();</div><div class="line">        <span class="keyword">char</span> *<span class="built_in">array</span> = <span class="keyword">new</span> <span class="keyword">char</span>[length+<span class="number">1</span>];</div><div class="line">        <span class="built_in">strcpy</span>(<span class="built_in">array</span>, s.c_str());</div><div class="line">        </div><div class="line">        <span class="keyword">int</span> currentLen = <span class="number">0</span>;</div><div class="line">        <span class="keyword">int</span> maxlen = currentLen;</div><div class="line">        <span class="keyword">int</span> tail = <span class="number">0</span>;</div><div class="line">        </div><div class="line">        <span class="stl_container"><span class="built_in">unordered_map</span>&lt;<span class="keyword">int</span>,<span class="keyword">int</span>&gt;</span> hash;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>;i&lt;length; i++){</div><div class="line">            <span class="keyword">char</span> c=<span class="built_in">array</span>[i];</div><div class="line">            <span class="comment">// if this character appeared before</span></div><div class="line">            <span class="keyword">if</span>(hash.find(c)!=hash.end()){</div><div class="line">                <span class="keyword">int</span> usedTobe = hash[c];</div><div class="line">                hash[c] = i; <span class="comment">// update the latest occurence of this character</span></div><div class="line">                <span class="comment">// if this character has seen within the latest </span></div><div class="line">                <span class="comment">// non-duplicated substring.</span></div><div class="line">                <span class="keyword">if</span>(usedTobe&gt;=tail){</div><div class="line">                    <span class="comment">// Since a duplicate is seen here, </span></div><div class="line">                    <span class="comment">// conclude the last substring.</span></div><div class="line">                    <span class="comment">// If current substring is the longest ever seen, update</span></div><div class="line">                    <span class="keyword">if</span>(currentLen&gt;maxlen) </div><div class="line">                        maxlen=currentLen;            </div><div class="line">                    <span class="comment">// Exclude the previous occurence</span></div><div class="line">                    tail = usedTobe+<span class="number">1</span>; </div><div class="line">                }</div><div class="line">            <span class="comment">// if this is a new character ever seen</span></div><div class="line">            }<span class="keyword">else</span> {</div><div class="line">                hash[c] = i;</div><div class="line">            }</div><div class="line">            </div><div class="line">            <span class="comment">// update the length of current substring in each iteration</span></div><div class="line">            currentLen = i-tail+<span class="number">1</span>;</div><div class="line">        }</div><div class="line">        <span class="keyword">return</span> max(currentLen, maxlen);</div><div class="line">    }</div><div class="line">};</div></pre></td></tr></table></figure>
+
+<p><a href="https://leetcode.com/discuss/13336/shortest-o-n-dp-solution-with-explanations" target="_blank" rel="external">A more elegant implementation</a>  by others.</p>
+
+      
+    </div>
+
+	
+		
+	
+
+	<hr/>
+
+	
+  </div>
+</article>
 
 
-<p>If you are using VS2012, it’s possible later the compiler complains that the type <code>float_t</code> is not defined, then the following code is also needed to add into <code>settings.h</code></p>
-<figure class="highlight C"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">namespace</span> <span class="built_in">std</span> {</div><div class="line">    <span class="keyword">typedef</span> <span class="keyword">float</span> float_t;</div><div class="line">}</div><div class="line"><span class="keyword">typedef</span> <span class="keyword">float</span> float_t;</div></pre></td></tr></table></figure>
 
-<p>3) Create folder <code>convnet/build</code>, and create a blank VS C++ project inside the folder. Then drag all source files inside <code>convnet/convnet</code> except <code>kernels.ocl</code> into the project. </p>
-<p>4) In property setting of the project, add the directory of boost header files, and the headers directory for OpenCL to C/C++ “include directories”.</p>
-<p>5) Add OpenCL lib directory (with the specific platform folder) to the “additional lib search path”, and add <code>OpenCL.lib</code> to the linking libs explicitly.</p>
-<p>6) For better performance, please use <code>Release</code> scheme to build.</p>
-<h4 id="Macro_explanations">Macro explanations</h4>
-<figure class="highlight C"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="preprocessor">#<span class="keyword">define</span> GPU</span></div><div class="line"><span class="comment">//#define PROFILING</span></div><div class="line"><span class="comment">//#define SIMPLE_PARALLEL</span></div><div class="line"><span class="comment">//#define BATCH_MORE</span></div><div class="line"><span class="preprocessor">#<span class="keyword">define</span> THREAD_TASKS 3</span></div><div class="line"><span class="comment">//#define CHECK_RESULT</span></div></pre></td></tr></table></figure>
+    
+        <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <div class="header">
+      
+  
+    <h2 class="title_link"><a href="/2015/03/25/leetcode-02/">leetcode_02 Add two numbers</a>
+        <small>
+            <time datetime="2015-03-25T17:15:45.000Z">Mar 25 2015</time>
+        </small>
+    </h2>
+  
 
-<p>Above are the macros defined inside <code>settings.h</code> file. The <code>settings.h</code> files is added to the <code>.gitignore</code> list so that each commit is platform and settings independent.</p>
-<ul>
-<li>If <code>GPU</code> is NOT defined, the project will only use CPU code, and the rest of the macros will not take effect on anything, while the last parameter (batch size) of the <code>n.test</code> function call should be <code>1</code> since CPU operations don’t take batch inputs.</li>
-<li>If <code>PROFILING</code> is defined, the kernels in each <code>forward_batch</code> or <code>forward_batch_more</code> functions of class <code>ConvlutionalLayer</code> will be iterated multiple times (100 times) and print out profiling info about the kernels. Before doing so, inside <code>main.cpp</code>, the <code>test_sample_count</code> and the last parameter of the <code>n.test</code> function call should be consistent, so that the program will only go forward through the network once in the testing process.</li>
-<li><code>SIMPLE_PARALLEL</code> means using <code>forward_gpu</code> for testing process, and the batch size should set to <code>1</code>. It only takes effect in branch <code>profile-parallel</code>.</li>
-<li>If <code>BATCH_MORE</code> is defined, then <code>forward_batch_more</code> is used, otherwise, <code>forward_batch</code> will be used. If <code>BATCH_MORE</code> is defined, one MUST make sure that the <code>THREAD_TASKS</code> macro defined in <code>kernels.ocl</code> file on line 103 is consistent with the macro defined. They must have the same value to compute correctly.</li>
-<li>If <code>CHECK_RESULT</code> is defined, the result will be checked after each forward feeding process is finished. Notice that this only support checking result for batch operation outputs, which means when <code>GPU</code> is undefined or <code>SIMPLE_PARALLEL</code> is defined, this macro MUST be commented out.</li>
-</ul>
+
+    </div>
+
+    <div class="entry">
+      
+        <p><a href="https://leetcode.com/problems/add-two-numbers/" target="_blank" rel="external">leetcode problem site</a></p>
+<p>I’m working on projects in functional programming languages these days, so recursion is used in this case.</p>
+<p>Need to be causious when dealing with input cases like {0, 0} and numbers with a length difference larger than 1. </p>
+<p>Then specify the stop case of the recursion where the two input nodes are both NULLs, but don’t forget there still may be a non-zero complement value. </p>
+<figure class="highlight C++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * Definition for singly-linked list.</div><div class="line"> * struct ListNode {</div><div class="line"> *     int val;</div><div class="line"> *     ListNode *next;</div><div class="line"> *     ListNode(int x) : val(x), next(NULL) {}</div><div class="line"> * };</div><div class="line"> */</div><div class="line"><span class="keyword">class</span> Solution {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    ListNode *addTwoNumbers(ListNode *l1, ListNode *l2) {</div><div class="line">        <span class="keyword">return</span> addTwoNumbers(l1, l2, <span class="number">0</span>);</div><div class="line">    }</div><div class="line">    </div><div class="line">    ListNode *addTwoNumbers(ListNode *l1, ListNode *l2, <span class="keyword">int</span> complement) {</div><div class="line">        <span class="keyword">if</span>(l1!=<span class="keyword">nullptr</span> && l2!=<span class="keyword">nullptr</span>){</div><div class="line">            <span class="keyword">int</span> sum = l1-&gt;val + l2-&gt;val + complement;</div><div class="line">            ListNode *pNode = <span class="keyword">new</span> ListNode(sum%<span class="number">10</span>);</div><div class="line">            pNode-&gt;next = addTwoNumbers(l1-&gt;next, l2-&gt;next, sum/<span class="number">10</span>);</div><div class="line">            <span class="keyword">return</span> pNode;</div><div class="line">        }<span class="keyword">else</span> <span class="keyword">if</span>(l1==<span class="keyword">nullptr</span> && l2!=<span class="keyword">nullptr</span>){</div><div class="line">            <span class="keyword">int</span> sum = l2-&gt;val + complement;</div><div class="line">            ListNode *pNode = <span class="keyword">new</span> ListNode(sum%<span class="number">10</span>);</div><div class="line">            pNode-&gt;next = addTwoNumbers(<span class="keyword">nullptr</span>, l2-&gt;next, sum/<span class="number">10</span>);</div><div class="line">            <span class="keyword">return</span> pNode;</div><div class="line">        }<span class="keyword">else</span> <span class="keyword">if</span>(l1!=<span class="keyword">nullptr</span> && l2==<span class="keyword">nullptr</span>){</div><div class="line">            <span class="keyword">int</span> sum = l1-&gt;val + complement;</div><div class="line">            ListNode *pNode = <span class="keyword">new</span> ListNode(sum%<span class="number">10</span>);</div><div class="line">            pNode-&gt;next = addTwoNumbers(l1-&gt;next, <span class="keyword">nullptr</span>, sum/<span class="number">10</span>);</div><div class="line">            <span class="keyword">return</span> pNode;</div><div class="line">        }<span class="keyword">else</span>{ <span class="comment">// There's no number left to add, then add a complement node</span></div><div class="line">               <span class="comment">// if needed.</span></div><div class="line">            <span class="keyword">return</span> complement?(<span class="keyword">new</span> ListNode(<span class="number">1</span>)):<span class="keyword">nullptr</span>;</div><div class="line">        }</div><div class="line">    }</div><div class="line">};</div></pre></td></tr></table></figure>
+
+
+      
+    </div>
+
+	
+		
+	
+
+	<hr/>
+
+	
+  </div>
+</article>
+
+
+
+    
+        <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <div class="header">
+      
+  
+    <h2 class="title_link"><a href="/2015/03/25/leetcode-1/">leetcode_01 Two sum</a>
+        <small>
+            <time datetime="2015-03-25T16:18:58.000Z">Mar 25 2015</time>
+        </small>
+    </h2>
+  
+
+
+    </div>
+
+    <div class="entry">
+      
+        <p><a href="https://leetcode.com/problems/two-sum/" target="_blank" rel="external">leetcode problem site</a></p>
+<p>The easiest and slowest solution is very obvious, which has O(n^2) time complexity. Pseudo-code is as follows:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">foreach elementA <span class="operator">in</span> numbers:</div><div class="line">    foreach elementB <span class="operator">in</span> all elements <span class="command"><span class="keyword">on</span> <span class="title">the</span> <span class="title">left</span> <span class="title">side</span> <span class="title">of</span> <span class="title">elementA</span>:</span></div><div class="line">        <span class="keyword">if</span> elementA+elementB == target:</div><div class="line">            <span class="constant">return</span> <span class="operator">a</span> vector <span class="operator">with</span> indexA+<span class="number">1</span>, indexB+<span class="number">1</span></div></pre></td></tr></table></figure>
+
+<p>This solution will be judged time out by Leetcode oj.</p>
+<p>My first attempt is as follows, which has O(nlogn) complexity. Pseudo-code is as follows:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">sortedNumbers = <span class="built_in">sort</span>(numbers)</div><div class="line">indexL, indexR = <span class="number">0</span>, <span class="built_in">len</span>(numbers)-<span class="number">1</span></div><div class="line"></div><div class="line"><span class="keyword">while</span>(indexL!=indexR):</div><div class="line">    L, R = sortedNumbers[indexL], sortedNumbers[indexR]</div><div class="line">    s = L + R</div><div class="line">    <span class="keyword">if</span> s &gt;target:</div><div class="line">        R<span class="comment">--</span></div><div class="line">    elif s &lt; target:</div><div class="line">        L++</div><div class="line">    <span class="keyword">else</span>:</div><div class="line">        <span class="constant">return</span> <span class="operator">a</span> vector <span class="operator">with</span> (L+<span class="number">1</span>, R+<span class="number">1</span>)</div></pre></td></tr></table></figure>
+
+<p>Then inspired by my friend, using Hash table will reduce the complexity to O(n). The cxx code is as follows:</p>
+<figure class="highlight C++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="keyword">class</span> Solution {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="stl_container"><span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;</span> twoSum(<span class="stl_container"><span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;</span> &numbers, <span class="keyword">int</span> target) {</div><div class="line">        <span class="stl_container"><span class="built_in">unordered_map</span>&lt;<span class="keyword">int</span>, <span class="keyword">int</span>&gt;</span> hmap;</div><div class="line">        <span class="stl_container"><span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;</span> result;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;numbers.size(); i++){</div><div class="line">            <span class="keyword">int</span> a = numbers[i];</div><div class="line">            <span class="keyword">int</span> toFind = target-a;</div><div class="line">            <span class="keyword">if</span>(hmap.find(toFind)!=hmap.end()) {</div><div class="line">                result.push_back(hmap[toFind]+<span class="number">1</span>);</div><div class="line">                result.push_back(i+<span class="number">1</span>);</div><div class="line">                <span class="keyword">return</span> result;</div><div class="line">            }</div><div class="line">            hmap[numbers[i]] = i;</div><div class="line">        }</div><div class="line">        <span class="keyword">return</span> result;</div><div class="line">    }</div><div class="line">};</div></pre></td></tr></table></figure>
+
 
       
     </div>
@@ -259,6 +247,8 @@
     
     <nav id="pagination">
   
+  
+    <a href="/archives/2015/page/2/" class="alignright next">Next</a>
   
   <div class="clearfix"></div>
 </nav>

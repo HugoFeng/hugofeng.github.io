@@ -96,9 +96,9 @@
     <div class="header">
       
   
-    <h2 class="title_link"><a href="/2015/01/08/optimizing-cnn-with-opencl/">Optimizing Pattern Inference of Convolutional Neural Network with OpenCL</a>
+    <h2 class="title_link"><a href="/2015/03/25/leetcode-03/">leetcode_03 Longest Substring Without Repeating Characters</a>
         <small>
-            <time datetime="2015-01-08T08:31:15.000Z">Jan 8 2015</time>
+            <time datetime="2015-03-25T20:10:55.000Z">Mar 25 2015</time>
         </small>
     </h2>
   
@@ -108,133 +108,10 @@
 
     <div class="entry">
       
-        <h3 id="1-_Introduction">1. Introduction</h3>
-<p>As a supervised approach of Deep Learning, Convolutional Neural Network is famous for its noise robustness and translation invariances. It has been widely used to recognize all kinds of patterns, such as hand written digits and human faces. Although Convolutional Neural Network has greatly reduced the computation, comparing with a traditional neural network with the same amount of connections, there still remains a lot of space for parallel optimizations.</p>
-<p>Here we introduce an implementation of parallelized LeNet-5 inference with OpenCL. The code for this project is hosted on <a href="https://github.com/HugoFeng/convnet" target="_blank" rel="external">https://github.com/HugoFeng/convnet</a> .</p>
-<h3 id="2-_Pattern_Inference_of_Convolutional_Neural_Network">2. Pattern Inference of Convolutional Neural Network</h3>
-<p>We are using LeNet-5, the most famous CNN architecture introduced by Yann LeCun, for pattern inference and training. The test dataset is the MNIST dataset, which contains a total of 70000 hand written digit images. Since we only consider optimizing the inference (feed forward stage) of the network, the training stage will not be mentioned.</p>
-<p><img src="/img/cnn_overview.png" alt="LeNet-5 (modified)"></p>
-<p>Above is an illustration of LeNet-5 (has been slightly modified). It has 3 convolution layers (C1, C3, C5), 2 subsampling layers (S2, S4) , 1 fully connected layer (F6) and 1 output layer.</p>
-<p>In traditional neural networks, nodes of every layer are presented as a “flat” 1-D array, and nodes from the adjacent layers are fully connected. But in convolutional networks, nodes in Convolution Layer and Subsampling Layer are given “2D+1D” representations (although stored in 1-D array as well). That means each of these layers, has several “feature maps”, in each “feature map”, nodes are organized in a 2D images fashion, in other words, each node in a layer is identified by (column index, row index, feature map index). </p>
-<p>Connections between a Convolution Layer and Subsampling Layer do not cross over, for example, each feature map in S2 only connects to its corresponding feature map in C1, and it sub-samples the feature maps in C1 with 2<em>2 to 1 with a “max” function. In the process of sub-sampling, the same 2</em>2 weight array is used over the input with respect to each feature map. </p>
-<p><img src="/img/cnn_activation.png" alt="Activation"></p>
-<p>Connections between a Subsampling Layer and a following Convolution Layer is more complicated.  As is shown above, each feature map in Convolution Layer is related to inputs from the areas of the same position in several feature maps. In the original definition of LeNet-5, the corresponding input feature map is not all of the maps but only some of them which may refer to a table given by Yann LeCun, but here we choose to connect all the input feature maps for simplicity.</p>
-<p>The Fully connected Layer is flat as traditional neural networks are, and it has fully connection with the input Convolution Network.</p>
-<p>The Output layer has 10 output nodes, and each node represents a label, which is one of the 10 digits. And the inference is computed as the node label with the largest output value.</p>
-<h3 id="3-_Performance_Analysis_of_serial_implementation">3. Performance Analysis of serial implementation</h3>
-<h4 id="3-1_Hardware_Specs">3.1 Hardware Specs</h4>
-<p>CPU Name: Intel Core i5-4250U Processor<br>Number of Cores: 2<br>Number of Threads: 4<br>Processor Base Frequency:  1.3 GHz<br>Max Turbo Frequency:  2.6 GHz<br>Number of Memory Channels: 2<br>Max Memory Bandwidth: 25.6 GB/s</p>
-<h4 id="3-2_Profiling">3.2 Profiling</h4>
-<p>Test with inference 100 samples:</p>
-<p><img src="/img/cnn_test1.png" alt="Test1"></p>
-<p>It is very obvious that the <code>forward</code> method of Class <code>ConvolutionalLayer</code> is consuming 49562/50169 = 98.79% of <code>test</code> function call’s time. So working on optimizing the method <code>forward</code> in class <code>ConvolutionalLayer</code> is the best choice.</p>
-<h3 id="4-_Performance_Analysis_of_parallel_optimization">4. Performance Analysis of parallel optimization</h3>
-<h4 id="4-1_Hardware_Specs">4.1 Hardware Specs</h4>
-<p>The first device is called Intel(R) HD Graphics 5000<br>There is a read-write cache<br>The global mem cache size is 2097152<br>The local memory size is 65536<br>The maximum work group size is: 512<br>The maximum number of dimensions is: 3<br>The maximum number of items in dimension 0 is 512<br>The maximum number of items in dimension 1 is 512<br>The maximum number of items in dimension 2 is 512</p>
-<p>Number of compute units:       40<br>Clock frequency in MHz :       200(lowest), 1000(highest)<br>Max amount of memory in bytes: 373712486<br>Memory Type:        DDR3<br>Bus Width:  128 Bit<br>Memory Bandwidth: 25.6 GB/s<br>Floating-point performance:     704 GFLOPS</p>
-<h3 id="5-_Strategies_of_Optimizations">5. Strategies of Optimizations</h3>
-<p>As has been discussed above, the most time consuming function is <code>forward</code> in class <code>ConvolutionalLayer</code>. So our goal is to minimize the time cost by this function.</p>
-<p>In my project, I have implemented 3 different approaches for parallelizing the <code>forward</code> method in class <code>ConvolutionalLayer</code>. </p>
-<ul>
-<li><p>forward_parallel: accepts one input samples at a time, which is the same as the CPU serial version. It hides all OpenCL implementations inside this function, so that codes in all the classes don’t have to make any change to be compatible with is parallelized function. User can use a macro <code>GPU</code> to switch between the original CPU <code>forward</code> implementation and the GPU “forward_parallel”.</p>
-<ul>
-<li>Lack of parallel data access: The number and topology of work items is defined by the problem, which means we cannot increase work items.</li>
-</ul>
-</li>
-</ul>
-<p><img src="/img/cnn_topo1.png" alt="Topology of Work items1"></p>
-<ul>
-<li><p>forward_batch: accepts a batch of input samples at once, and codes in other classes are modified slightly to work with the batch operation. </p>
-<ul>
-<li>The problem size of each kernel can be increased by changing the batch size.</li>
-</ul>
-</li>
-</ul>
-<p><img src="/img/cnn_topo2.png" alt="Topology of Work items2"></p>
-<ul>
-<li>forward_batch_more: acts like <code>forward_batch</code>, but each thread works for output node in several samples at the same location. As is shown below, each work item works for 2 nodes at the same location but within 2 different samples. Since nodes at the same location belonging to different samples of a batch are sharing the same set of weights, so each item will only need to load one set of weights for the inputs and applied them on the inputs of several batches. By doing so, it saves bandwidth and increases the Computational Intensity for a certain amount. Furthermore, the convolution procedure is re-coded together with the iteration of loading the input sub-matrix into private registers, so that the convolution is computed during the loading, which saves one inner loop per input per sample per output node. And the number of samples one item should deal with is defined as a macro <code>THREAD_TASKS</code>, which can be changed.</li>
-</ul>
-<p><img src="/img/cnn_topo3.png" alt="Topology of Work items3"></p>
-<h4 id="5-1_Roofline_model_Analysis">5.1 Roofline model Analysis</h4>
-<ol>
-<li><p>“forward_parallel”: </p>
-<p>a) CI = 2.625</p>
-<p>b) Peak performance = 2.625 * 25.6 = 67.2 GFLOPS</p>
-</li>
-<li><p>“forward_batch”: </p>
-<p>a) CI = 3.2</p>
-<p>b) Peak performance = 3.2 * 25.6 = 81.92 GFLOPS</p>
-</li>
-<li><p>“forward_batch_more”: </p>
-<p>a) <span>$CI = \frac{9⁄T+15.8}{1⁄T+1⁄(indepth*25)+1} * \frac{1}{4} < 3.95$</span>, (T=THREAD_TASKS, as the node/batch numbers a work item should deal with)</p>
-<p>b) Peak performance = 3.95 * 25.6 = 101.12 GFLOPS </p>
-</li>
-</ol>
-<p><img src="/img/cnn_roofline.png" alt="Roofline model"></p>
-<p>Since the first implementation has a low computational intensity and fell into memory bandwidth limitation, I designed the second and the third implementation trying to raise the computational intensity, but a CI of 3.7 is so far the best I can get while a CI of 3.95 is theoretically reachable with an infinitely large T (THREAD_TASKS). It’s still far from CI of 27.5, which will get rid of memory bandwidth limitations.</p>
-<h3 id="6-_Profiling_the_kernels">6. Profiling the kernels</h3>
-<p>We choose the second Convolution Layer to profile, which has the following parameters:</p>
-<ul>
-<li><p>Input depth: 6, height: 14, width: 14</p>
-</li>
-<li><p>Output depth: 16, height: 10, width: 10</p>
-</li>
-</ul>
-<p><img src="/img/cnn_table.png" alt="Profile result"></p>
-<p><img src="/img/cnn_best.png" alt="Time &amp; speed up"></p>
-<p>The first implementation, <code>forward_parallel</code>, operates on one sample per kernel, and it maps each work item to each output pixel, so the number of work items the kernel launches is limited by the size of the output feature maps.</p>
-<p>In order to raise the number of threads each kernel launches and make the kernel scalable, the second implementation is designed. It groups a certain amount of samples together as a batch. Therefore, multiple samples can be computed with a single kernel launch, and according to the batch size, the thread number can be greatly increased. By doing so, the kernel has raised the speed up from 47.61 to 63.3, which is not dramatic since the actual work of each work item remains the same.</p>
-<p>In the third implementation, the work of each work item is modified so that each work item can work on multiple samples. And since each work item works on the pixel of the same location of each sample, the pixels share the same set of weight matrix. So each work item only need to load the weight matrix once and it is loaded to the private memory. </p>
-<p><img src="/img/cnn_time_kernel.png" alt="kernel time"></p>
-<p>By saving bandwidth loading weights, <code>forward_batch_more</code> kernel can gain a speed up of approximately 2 times comparing to <code>forward_batch</code> kernel.</p>
-<p><img src="/img/cnn_time_kernel_t.png" alt="kernel time w.r.t. THREAD_TASKS"></p>
-<p>However, by increasing the THREAD_TASKS, which is the number of samples each work item works on, the work load of each work item is also increased. Due to the pool performance of the cores on GPU, adding too much serial work load on each thread is not a good idea. Experiments shows that with <code>THREAD_TASKS</code> set to 3, which means each work item works on 3 samples, the kernel can reach the best performance on the problem set of the second Convolutional Layer.</p>
-<p>Besides, whether using <code>forward_batch</code> or <code>forward_batch_more</code> kernel, there doesn’t seem to be much difference when considering the whole task, say testing the inference with 1000 samples with the feed forward convolutional neural network. Instead, batch size seems to have more influence than the kernels themselves.</p>
-<p><img src="/img/cnn_time_sample.png" alt="time and sample"></p>
-<p>Profiling the whole program shows why this would happen. Using “Performance and Diagnose” tool in Visual Studio 2013, it tells how much time is spent on each function, but it is worth to point out that using this tool requires target to be built with <code>Debug</code> schema, instead of <code>Release</code> schema with which the previous analysis is tested. So the exact time reported here might be not accurate and trustworthy, but the percentage data is useful. </p>
-<p><img src="/img/cnn_test2.png" alt="test2"></p>
-<p>By profiling the task of testing 1000 samples, it shows that with the power of GPU, the function that calls OpenCL kernel only counts a very small part of the whole time consumption, while the <code>forward_batch</code> functions in class <code>FullyConnectedLayer</code> and class <code>MaxpoolingLayer</code> is taking most of the time. This explains why there doesn’t seem to be a difference changing the kernel. On the other hand, this indicates that on top of the speed up we have achieved, if the <code>forward_batch</code> function of the other 2 layers are optimized, more speed up is still possible.</p>
-<p><img src="/img/cnn_time_all.png" alt="time all"></p>
-<p>Back to the whole picture, built with <code>Release</code> schema, code with OpenCL implementation runs a lot faster than the serial-only code, which gains a speed up of 34215/293.4 = 116.6 times.</p>
-<h3 id="7-_Conclusion">7. Conclusion</h3>
-<p>This report introduced three implementations of optimizing the inference part of a Convolutional Neural Network with OpenCL technology. The speed up of the specific function (function <code>forward</code>) reached 151.78 times while the speed up of the whole inference process reached 116.6 times. </p>
-<hr>
-<h3 id="Appendix">Appendix</h3>
-<h4 id="Setting_up_the_project">Setting up the project</h4>
-<p>Requirements: </p>
-<ul>
-<li>Visual Studio 2013, Xcode, or Visual Studio 2012 ( need to add some extra code ). VS2010 is not supported.</li>
-<li>Git</li>
-<li>Boost library ( only need header files, not binaries)</li>
-<li>MNIST dataset ( will be attached with the code)</li>
-</ul>
-<p>1)  Clone the <code>opencl_support</code> branch and <code>profile-parallel</code> of the repo on <a href="https://github.com/HugoFeng/convnet" target="_blank" rel="external">https://github.com/HugoFeng/convnet</a>, or just unzip my attachment zip file.</p>
-<ul>
-<li>git clone <a href="https://github.com/HugoFeng/convnet.git" target="_blank" rel="external">https://github.com/HugoFeng/convnet.git</a></li>
-<li>git checkout profile-parallel origin/profile-parallel</li>
-</ul>
-<p>2)  In the <code>convnet/convnet/</code> directory, if file <code>settings.h</code> doesn’t exits, you need to create it manually, and add the following snippet to it. (Change the directories to your own path)</p>
-<figure class="highlight C"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="preprocessor">#<span class="keyword">define</span> GPU</span></div><div class="line"><span class="comment">//#define PROFILING</span></div><div class="line"><span class="comment">//#define SIMPLE_PARALLEL</span></div><div class="line"><span class="comment">//#define BATCH_MORE</span></div><div class="line"><span class="preprocessor">#<span class="keyword">define</span> THREAD_TASKS 3</span></div><div class="line"><span class="comment">//#define CHECK_RESULT</span></div><div class="line"><span class="preprocessor">#<span class="keyword">define</span> DATA_PATH "E:/code/data/mnist/"</span></div><div class="line"><span class="preprocessor">#<span class="keyword">define</span> KERNEL_PATH "E:/code/cpp/convnet/convnet/kernels.ocl"</span></div></pre></td></tr></table></figure>
+        <p><a href="https://leetcode.com/problems/longest-substring-without-repeating-characters/" target="_blank" rel="external">leetcode problem site</a></p>
+<figure class="highlight C++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="keyword">class</span> Solution {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="keyword">int</span> lengthOfLongestSubstring(<span class="built_in">string</span> s) {</div><div class="line">        <span class="keyword">int</span> length = s.length();</div><div class="line">        <span class="keyword">char</span> *<span class="built_in">array</span> = <span class="keyword">new</span> <span class="keyword">char</span>[length+<span class="number">1</span>];</div><div class="line">        <span class="built_in">strcpy</span>(<span class="built_in">array</span>, s.c_str());</div><div class="line">        </div><div class="line">        <span class="keyword">int</span> currentLen = <span class="number">0</span>;</div><div class="line">        <span class="keyword">int</span> maxlen = currentLen;</div><div class="line">        <span class="keyword">int</span> tail = <span class="number">0</span>;</div><div class="line">        </div><div class="line">        <span class="stl_container"><span class="built_in">unordered_map</span>&lt;<span class="keyword">int</span>,<span class="keyword">int</span>&gt;</span> hash;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>;i&lt;length; i++){</div><div class="line">            <span class="keyword">char</span> c=<span class="built_in">array</span>[i];</div><div class="line">            <span class="comment">// if this character appeared before</span></div><div class="line">            <span class="keyword">if</span>(hash.find(c)!=hash.end()){</div><div class="line">                <span class="keyword">int</span> usedTobe = hash[c];</div><div class="line">                hash[c] = i; <span class="comment">// update the latest occurence of this character</span></div><div class="line">                <span class="comment">// if this character has seen within the latest </span></div><div class="line">                <span class="comment">// non-duplicated substring.</span></div><div class="line">                <span class="keyword">if</span>(usedTobe&gt;=tail){</div><div class="line">                    <span class="comment">// Since a duplicate is seen here, </span></div><div class="line">                    <span class="comment">// conclude the last substring.</span></div><div class="line">                    <span class="comment">// If current substring is the longest ever seen, update</span></div><div class="line">                    <span class="keyword">if</span>(currentLen&gt;maxlen) </div><div class="line">                        maxlen=currentLen;            </div><div class="line">                    <span class="comment">// Exclude the previous occurence</span></div><div class="line">                    tail = usedTobe+<span class="number">1</span>; </div><div class="line">                }</div><div class="line">            <span class="comment">// if this is a new character ever seen</span></div><div class="line">            }<span class="keyword">else</span> {</div><div class="line">                hash[c] = i;</div><div class="line">            }</div><div class="line">            </div><div class="line">            <span class="comment">// update the length of current substring in each iteration</span></div><div class="line">            currentLen = i-tail+<span class="number">1</span>;</div><div class="line">        }</div><div class="line">        <span class="keyword">return</span> max(currentLen, maxlen);</div><div class="line">    }</div><div class="line">};</div></pre></td></tr></table></figure>
 
-
-<p>If you are using VS2012, it’s possible later the compiler complains that the type <code>float_t</code> is not defined, then the following code is also needed to add into <code>settings.h</code></p>
-<figure class="highlight C"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">namespace</span> <span class="built_in">std</span> {</div><div class="line">    <span class="keyword">typedef</span> <span class="keyword">float</span> float_t;</div><div class="line">}</div><div class="line"><span class="keyword">typedef</span> <span class="keyword">float</span> float_t;</div></pre></td></tr></table></figure>
-
-<p>3) Create folder <code>convnet/build</code>, and create a blank VS C++ project inside the folder. Then drag all source files inside <code>convnet/convnet</code> except <code>kernels.ocl</code> into the project. </p>
-<p>4) In property setting of the project, add the directory of boost header files, and the headers directory for OpenCL to C/C++ “include directories”.</p>
-<p>5) Add OpenCL lib directory (with the specific platform folder) to the “additional lib search path”, and add <code>OpenCL.lib</code> to the linking libs explicitly.</p>
-<p>6) For better performance, please use <code>Release</code> scheme to build.</p>
-<h4 id="Macro_explanations">Macro explanations</h4>
-<figure class="highlight C"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="preprocessor">#<span class="keyword">define</span> GPU</span></div><div class="line"><span class="comment">//#define PROFILING</span></div><div class="line"><span class="comment">//#define SIMPLE_PARALLEL</span></div><div class="line"><span class="comment">//#define BATCH_MORE</span></div><div class="line"><span class="preprocessor">#<span class="keyword">define</span> THREAD_TASKS 3</span></div><div class="line"><span class="comment">//#define CHECK_RESULT</span></div></pre></td></tr></table></figure>
-
-<p>Above are the macros defined inside <code>settings.h</code> file. The <code>settings.h</code> files is added to the <code>.gitignore</code> list so that each commit is platform and settings independent.</p>
-<ul>
-<li>If <code>GPU</code> is NOT defined, the project will only use CPU code, and the rest of the macros will not take effect on anything, while the last parameter (batch size) of the <code>n.test</code> function call should be <code>1</code> since CPU operations don’t take batch inputs.</li>
-<li>If <code>PROFILING</code> is defined, the kernels in each <code>forward_batch</code> or <code>forward_batch_more</code> functions of class <code>ConvlutionalLayer</code> will be iterated multiple times (100 times) and print out profiling info about the kernels. Before doing so, inside <code>main.cpp</code>, the <code>test_sample_count</code> and the last parameter of the <code>n.test</code> function call should be consistent, so that the program will only go forward through the network once in the testing process.</li>
-<li><code>SIMPLE_PARALLEL</code> means using <code>forward_gpu</code> for testing process, and the batch size should set to <code>1</code>. It only takes effect in branch <code>profile-parallel</code>.</li>
-<li>If <code>BATCH_MORE</code> is defined, then <code>forward_batch_more</code> is used, otherwise, <code>forward_batch</code> will be used. If <code>BATCH_MORE</code> is defined, one MUST make sure that the <code>THREAD_TASKS</code> macro defined in <code>kernels.ocl</code> file on line 103 is consistent with the macro defined. They must have the same value to compute correctly.</li>
-<li>If <code>CHECK_RESULT</code> is defined, the result will be checked after each forward feeding process is finished. Notice that this only support checking result for batch operation outputs, which means when <code>GPU</code> is undefined or <code>SIMPLE_PARALLEL</code> is defined, this macro MUST be commented out.</li>
-</ul>
+<p><a href="https://leetcode.com/discuss/13336/shortest-o-n-dp-solution-with-explanations" target="_blank" rel="external">A more elegant implementation</a>  by others.</p>
 
       
     </div>
@@ -270,9 +147,9 @@
     <div class="header">
       
   
-    <h2 class="title_link"><a href="/2014/08/28/java8_lambda_stream/">Lambda and Stream in Java 8</a>
+    <h2 class="title_link"><a href="/2015/03/25/leetcode-02/">leetcode_02 Add two numbers</a>
         <small>
-            <time datetime="2014-08-28T18:05:57.000Z">Aug 28 2014</time>
+            <time datetime="2015-03-25T17:15:45.000Z">Mar 25 2015</time>
         </small>
     </h2>
   
@@ -282,152 +159,12 @@
 
     <div class="entry">
       
-        <h3 id="1-_Introduction">1. Introduction</h3>
-<p> This article introduces the new functional-programming features supported in Java 8. It first talks about the basic ways to implement lambdas and streams in the latest version of JDK, and then, pros and cons of this new feature are analyzed. </p>
-<p> We assume you are already familiar with functional programming styles and have dealt with lambdas and streams in other languages. So in this article we are not going to introduce these things in conceptual level, and some of them are compared with Scheme.</p>
-<h3 id="2-_What_is_a_lambda_and_a_stream_in_Java_8?">2. What is a lambda and a stream in Java 8?</h3>
-<h4 id="2-1_Lambda_expression">2.1 Lambda expression</h4>
-<p>Java 8 provides a new package <code>java.util.function</code> containing functional interfaces, and a lambda expression is an instance of a subtype of <code>Object</code> implementing one of the functional interfaces. Consider this as ‘Syntactic Sugar’ mapping lambda expressions syntaxes to an anonymous class. </p>
-<p>For example:</p>
-<ul>
-<li>Old Java style using anonymous inner class</li>
-</ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">Thread t1 = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Runnable() {     </div><div class="line">            <span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span>() {</div><div class="line">                System.<span class="keyword">out</span>.println(<span class="string">"Hey there anonymous!"</span>);</div><div class="line">            }</div><div class="line">        });</div></pre></td></tr></table></figure>
+        <p><a href="https://leetcode.com/problems/add-two-numbers/" target="_blank" rel="external">leetcode problem site</a></p>
+<p>I’m working on projects in functional programming languages these days, so recursion is used in this case.</p>
+<p>Need to be causious when dealing with input cases like {0, 0} and numbers with a length difference larger than 1. </p>
+<p>Then specify the stop case of the recursion where the two input nodes are both NULLs, but don’t forget there still may be a non-zero complement value. </p>
+<figure class="highlight C++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * Definition for singly-linked list.</div><div class="line"> * struct ListNode {</div><div class="line"> *     int val;</div><div class="line"> *     ListNode *next;</div><div class="line"> *     ListNode(int x) : val(x), next(NULL) {}</div><div class="line"> * };</div><div class="line"> */</div><div class="line"><span class="keyword">class</span> Solution {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    ListNode *addTwoNumbers(ListNode *l1, ListNode *l2) {</div><div class="line">        <span class="keyword">return</span> addTwoNumbers(l1, l2, <span class="number">0</span>);</div><div class="line">    }</div><div class="line">    </div><div class="line">    ListNode *addTwoNumbers(ListNode *l1, ListNode *l2, <span class="keyword">int</span> complement) {</div><div class="line">        <span class="keyword">if</span>(l1!=<span class="keyword">nullptr</span> && l2!=<span class="keyword">nullptr</span>){</div><div class="line">            <span class="keyword">int</span> sum = l1-&gt;val + l2-&gt;val + complement;</div><div class="line">            ListNode *pNode = <span class="keyword">new</span> ListNode(sum%<span class="number">10</span>);</div><div class="line">            pNode-&gt;next = addTwoNumbers(l1-&gt;next, l2-&gt;next, sum/<span class="number">10</span>);</div><div class="line">            <span class="keyword">return</span> pNode;</div><div class="line">        }<span class="keyword">else</span> <span class="keyword">if</span>(l1==<span class="keyword">nullptr</span> && l2!=<span class="keyword">nullptr</span>){</div><div class="line">            <span class="keyword">int</span> sum = l2-&gt;val + complement;</div><div class="line">            ListNode *pNode = <span class="keyword">new</span> ListNode(sum%<span class="number">10</span>);</div><div class="line">            pNode-&gt;next = addTwoNumbers(<span class="keyword">nullptr</span>, l2-&gt;next, sum/<span class="number">10</span>);</div><div class="line">            <span class="keyword">return</span> pNode;</div><div class="line">        }<span class="keyword">else</span> <span class="keyword">if</span>(l1!=<span class="keyword">nullptr</span> && l2==<span class="keyword">nullptr</span>){</div><div class="line">            <span class="keyword">int</span> sum = l1-&gt;val + complement;</div><div class="line">            ListNode *pNode = <span class="keyword">new</span> ListNode(sum%<span class="number">10</span>);</div><div class="line">            pNode-&gt;next = addTwoNumbers(l1-&gt;next, <span class="keyword">nullptr</span>, sum/<span class="number">10</span>);</div><div class="line">            <span class="keyword">return</span> pNode;</div><div class="line">        }<span class="keyword">else</span>{ <span class="comment">// There's no number left to add, then add a complement node</span></div><div class="line">               <span class="comment">// if needed.</span></div><div class="line">            <span class="keyword">return</span> complement?(<span class="keyword">new</span> ListNode(<span class="number">1</span>)):<span class="keyword">nullptr</span>;</div><div class="line">        }</div><div class="line">    }</div><div class="line">};</div></pre></td></tr></table></figure>
 
-<ul>
-<li>Java 8 lambda style</li>
-</ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">Thread t2 = <span class="keyword">new</span> Thread(</div><div class="line">                    <span class="function"><span class="params">()</span>-&gt;</span>{System.out.println(<span class="string">"Hey lambda!"</span>);} </div><div class="line">                );</div></pre></td></tr></table></figure>
-
-<p>The syntax of a lambda function is like “()-&gt;{…}”, where the argument are put in brackets, followed by an arrow alike sign “-&gt;”, with the body of the lambda as the last part. </p>
-<p>There are following categories [1] of interfaces declared in <code>java.util.function</code> package:</p>
-<ul>
-<li><strong>Function</strong>: Takes a single parameter, returns result based on parameter value</li>
-<li><strong>Predicate</strong>: Takes a single parameter, returns a boolean result based on parameter value</li>
-<li><strong>BiFunction</strong>: Takes two parameters, returns result based on parameter value</li>
-<li><strong>Supplier</strong>: Takes no parameters, returns a result</li>
-<li><strong>Consumer</strong>: Takes a single parameter with no return (void)</li>
-</ul>
-<p>Beside these, one can also declare their own functional interfaces. Generally, the new java compiler accepts all interfaces declared with exactly one method as a functional interface, but one can also explicitly declare one by adding <code>@FunctionalInterface</code> annotation. For example:</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="keyword">class</span> Test1 {</div><div class="line">    @FunctionalInterface  <span class="comment">// This is optional.</span></div><div class="line">    <span class="keyword">public</span> <span class="keyword">interface</span> Discount { <span class="keyword">double</span> apply(<span class="keyword">double</span> originalPrice); }</div><div class="line">    </div><div class="line">    Discount discount;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setDiscount</span>(Discount d){ discount = d; }</div><div class="line">    </div><div class="line">    <span class="keyword">public</span> <span class="keyword">double</span> <span class="title">getPriceAfterDiscount</span>(<span class="keyword">double</span> price){ <span class="keyword">return</span> discount.apply(price); }</div><div class="line"></div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span>(String[] args) {</div><div class="line">        Test1 test1 = <span class="keyword">new</span> Test1();</div><div class="line">        <span class="keyword">double</span> applePrice = <span class="number">1.0</span>;</div><div class="line"></div><div class="line">        <span class="comment">// With type inference, compiler will expand this lambda to </span></div><div class="line">        <span class="comment">// an instance of anonymous class implementing Discount interface</span></div><div class="line">        test1.setDiscount(p -&gt; <span class="number">0.8</span>*p); </div><div class="line"></div><div class="line">        <span class="keyword">double</span> applePriceWithDiscount = test1. getPriceAfterDiscount(applePrice);</div><div class="line">        System.<span class="keyword">out</span>.println(applePriceWithDiscount); <span class="comment">// 0.8</span></div><div class="line">    }</div><div class="line">    </div><div class="line">}</div></pre></td></tr></table></figure>
-
-<h4 id="2-2_Stream">2.2 Stream</h4>
-<p>Stream API is provided in <code>java.util.stream</code> package. Stream is built on the basis of lambda with lazy evaluation feature. It is an enhancement made to collection interfaces. It is extremely handy for processing data.</p>
-<p>Due to backward compatibility reasons, simply adding additional methods to an interface will require rewriting all the classes implementing this interface. So in order to add additional features to old <code>Collection</code> Class, Java 8 introduces <code>default method</code>. <code>Default method</code> is an default implementation of a method, and is defined in the original class of the interface. With the help of <code>default methods</code>, subtypes of <code>Collection</code> class, classes user defined with old version Java, can work without realizing the added interfaces explicitly, so that adding new features to old classes will be invisible to users.</p>
-<p><code>Stream</code> is a sequence of elements supporting sequential and parallel aggregate operations. It’s not a data structure so it doesn’t store anything. It takes a lambda expression as an argument and returns another <code>Stream</code>, therefore, it can be made into cascades or pipelines.</p>
-<p>Using <code>Stream</code> is very intuitive:</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">IntStream<span class="built_in">.</span><span class="keyword">iterate</span>(<span class="number">0</span>, i<span class="subst">-&gt;</span>i<span class="subst">+</span><span class="number">1</span>)</div><div class="line">            <span class="built_in">.</span>filter(i<span class="subst">-&gt;</span>i<span class="subst">&gt;</span><span class="number">5</span>)</div><div class="line">            <span class="built_in">.</span>limit(<span class="number">3</span>)</div><div class="line">            <span class="built_in">.</span>forEach(System<span class="built_in">.</span>out<span class="tag">::println</span>);</div><div class="line"><span class="comment">// Output:</span></div><div class="line"><span class="comment">// 6</span></div><div class="line"><span class="comment">// 7</span></div><div class="line"><span class="comment">// 8</span></div></pre></td></tr></table></figure>
-
-<h3 id="3-_How_to_implement">3. How to implement</h3>
-<h4 id="3-1_Using_Lambda_expressions_in_Java_8">3.1 Using Lambda expressions in Java 8</h4>
-<ul>
-<li>Shortest way</li>
-</ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">() -&gt; <span class="number">5</span> // <span class="type">Without</span> input variable, <span class="keyword">return</span> a number</div><div class="line">x -&gt; <span class="number">2</span> * x // <span class="type">Take</span> <span class="number">1</span> input variable, <span class="keyword">return</span> <span class="literal">result</span> <span class="keyword">of</span> multipling by <span class="number">2</span></div><div class="line">( x, y ) -&gt; x - y // <span class="type">Take</span> <span class="number">2</span> input variables, <span class="keyword">return</span> their substraction</div></pre></td></tr></table></figure>
-
-<ul>
-<li>With type specification</li>
-</ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="params">(int x, int y)</span> -&gt;</span> x + y <span class="regexp">//</span> Take <span class="number">2</span> integers <span class="keyword">and</span> <span class="keyword">return</span> their sum</div><div class="line"><span class="function"><span class="params">(String s)</span> -&gt;</span> System.out.println(s) <span class="regexp">//</span> Take <span class="number">1</span> String input <span class="keyword">and</span> <span class="keyword">return</span> nothing</div></pre></td></tr></table></figure>
-
-<ul>
-<li>Using functional interface</li>
-</ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">@FunctionalInterface</div><div class="line"><span class="keyword">public</span> <span class="keyword">interface</span> Discount {</div><div class="line">    <span class="keyword">public</span> <span class="keyword">double</span> <span class="title">apply</span>(<span class="keyword">double</span> originalPrice);</div><div class="line">}</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span>(String[] args) {</div><div class="line">    Discount discount = (x) -&gt; <span class="number">0.7</span> * x;</div><div class="line">    System.<span class="keyword">out</span>.println(discount.apply(<span class="number">100</span>)); <span class="comment">// 70.0</span></div><div class="line">}</div></pre></td></tr></table></figure>
-
-<ul>
-<li>Using Function type</li>
-</ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">java.util.<span class="keyword">function</span>.<span class="keyword">Function</span>&lt;<span class="built_in">Double</span>, <span class="built_in">Double</span>&gt; discountFunction = (x) -&gt; <span class="number">0.6</span>*x;</div></pre></td></tr></table></figure>
-
-<h4 id="3-2_Using_Stream_APIs_in_Java_8">3.2 Using Stream APIs in Java 8</h4>
-<p>For operating with <code>Stream</code> APIs, there are 3 kinds of methods:</p>
-<ul>
-<li><p><strong>Creating a stream</strong>: <code>Stream.iterate()</code>, <code>Stream.generate()</code>, <code>Stream.of()</code>, <code>IntStream.of()</code>, <code>Array.asList().stream()</code>, <code>list.stream()</code>, <code>Array.stream()</code>, <code>String.chars()</code></p>
-</li>
-<li><p><strong>Intermediate Operations</strong>: <code>peek()</code>, <code>map()</code>, <code>filter()</code>, <code>sorted()</code>, <code>limit()</code></p>
-</li>
-</ul>
-<ul>
-<li><strong>Terminal Operations</strong>: <code>reduce()</code>, <code>count()</code>, <code>forEach()</code>, <code>match()</code>, <code>findFirst()</code></li>
-</ul>
-<p>The first kind initially generate a stream from an existing <code>Collection</code> instance or from a pair of <code>seed</code> and <code>function</code>.</p>
-<p>Intermediate operations accept lambda expression as arguments and return a new <code>Stream</code> with “processed” elements. It must be followed by a terminal operation, other wise, due to laziness feature, it will not be executed.</p>
-<p>Terminal operations either doesn’t return anything or return a new instance of <code>Collection</code>.</p>
-<p>Example:</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">IntStream<span class="built_in">.</span><span class="keyword">iterate</span>(<span class="number">0</span>, i<span class="subst">-&gt;</span>i<span class="subst">+</span><span class="number">1</span>)</div><div class="line">            <span class="built_in">.</span>filter(i<span class="subst">-&gt;</span>i<span class="subst">&gt;</span><span class="number">5</span>)</div><div class="line">            <span class="built_in">.</span>limit(<span class="number">3</span>)</div><div class="line">            <span class="built_in">.</span>forEach(System<span class="built_in">.</span>out<span class="tag">::println</span>);</div><div class="line"><span class="comment">// Output:</span></div><div class="line"><span class="comment">// 6</span></div><div class="line"><span class="comment">// 7</span></div><div class="line"><span class="comment">// 8</span></div></pre></td></tr></table></figure>
-
-<p>Here, it creates an int stream by assigning an initial value with a lambda expression, which is executed to update the value due to lazy evaluation. Then the stream is passed to an intermediate operation <code>filter</code>, which filters out the values that doesn’t return <code>True</code> in the predicate lambda expression. After that, it is passed to another intermediate operation <code>limit</code>, which stops the stream from generating new values once it receives 3 values. At the end, it uses a terminal operation <code>forEach</code> to do the follow up operation printing out each element it receives.</p>
-<p>Note that primitive types should be carefully used in Java <code>Stream</code>.</p>
-<p>For example[2]:</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">final</span> Integer[] integers = <span class="comment">{1, 2, 3}</span>;</div><div class="line"><span class="keyword">final</span> int[]     ints     = <span class="comment">{1, 2, 3}</span>;</div><div class="line"></div><div class="line">Stream.<span class="keyword">of</span>(integers).forEach(System.<span class="keyword">out</span>::println); <span class="comment">//That works just fine</span></div><div class="line">Stream.<span class="keyword">of</span>(ints).forEach(System.<span class="keyword">out</span>::println);     <span class="comment">//That doesn't</span></div><div class="line">IntStream.<span class="keyword">of</span>(ints).forEach(System.<span class="keyword">out</span>::println);  <span class="comment">//Have to use IntStream instead</span></div></pre></td></tr></table></figure>
-
-<p>This is because in <code>Stream</code> package, Java APIs are defined using generic types <code>Stream&lt;T&gt;</code> which only accepts a Class type. Luckily, there’re special APIs to specifically deal with primitive types: <code>IntStream</code>, <code>LongStream</code> and <code>DoubleStream</code>. But also be carefull using these primitive type streams. For example:</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">IntStream.range(<span class="number">0</span>, <span class="number">10</span>).<span class="keyword">collect</span>(Collectors.<span class="keyword">toList</span>());</div><div class="line"><span class="comment">// Cannot compile...</span></div><div class="line"></div><div class="line">IntStream.range(<span class="number">0</span>, <span class="number">10</span>).boxed().<span class="keyword">collect</span>(Collectors.<span class="keyword">toList</span>());</div><div class="line"><span class="comment">// Works!</span></div></pre></td></tr></table></figure>
-
-<p>Primitive types must be boxed to Objects in order to follow up by a <code>collect</code> operation.</p>
-<h4 id="3-3_Comparing_with_Scheme">3.3 Comparing with Scheme</h4>
-<ul>
-<li><code>(car list)</code>, get the head of a list:</li>
-</ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">List</span><span class="subst">&lt;</span><span class="built_in">Integer</span><span class="subst">&gt;</span> <span class="built_in">list</span> <span class="subst">=</span> Arrays<span class="built_in">.</span>asList(<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>);</div><div class="line"></div><div class="line"><span class="built_in">Integer</span> car <span class="subst">=</span> <span class="built_in">list</span><span class="built_in">.</span>stream()<span class="built_in">.</span>findFirst()<span class="built_in">.</span>get();</div><div class="line">System<span class="built_in">.</span>out<span class="built_in">.</span>println(<span class="string">"Car: "</span> <span class="subst">+</span> car); <span class="comment">// Car: 0</span></div></pre></td></tr></table></figure>
-
-<ul>
-<li><code>(cdr list)</code>, get the rest of a list:</li>
-</ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">List</span><span class="subst">&lt;</span><span class="built_in">Integer</span><span class="subst">&gt;</span> cdr <span class="subst">=</span> <span class="built_in">list</span><span class="built_in">.</span>stream()<span class="built_in">.</span><span class="keyword">skip</span>(<span class="number">1</span>)<span class="built_in">.</span>collect(Collectors<span class="built_in">.</span>toList());</div><div class="line">System<span class="built_in">.</span>out<span class="built_in">.</span>println(<span class="string">"Cdr: "</span> <span class="subst">+</span> cdr); <span class="comment">// Cdr: [1, 2, 3, 4]</span></div></pre></td></tr></table></figure>
-
-<ul>
-<li><code>(stream-car stream)</code>, get the first element of a stream:</li>
-</ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">Integer stream_car = list.stream().findFirst().<span class="keyword">get</span>();</div><div class="line">System.<span class="keyword">out</span>.println(stream_car); <span class="comment">// 0</span></div></pre></td></tr></table></figure>
-
-<ul>
-<li><code>(stream-cdr stream)</code>, get the rest of of the stream:</li>
-</ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">Stream s = <span class="keyword">list</span>.stream();</div><div class="line">s.<span class="keyword">forEach</span>(System.out::<span class="keyword">print</span>); <span class="comment">// 01234</span></div><div class="line">Stream stream_cdr1 = s.skip(<span class="number">1</span>); <span class="comment">// Error: stream has already been operated upon or closed</span></div><div class="line"></div><div class="line">Stream s2 = <span class="keyword">list</span>.stream();</div><div class="line">Stream stream_cdr2 = s2.skip(<span class="number">1</span>); <span class="comment">// Didn't end with a terminal operation, skip() is not computed</span></div><div class="line">stream_cdr2.<span class="keyword">forEach</span>(System.out::<span class="keyword">print</span>); <span class="comment">// 1234</span></div></pre></td></tr></table></figure>
-
-<ul>
-<li><code>(cons &#39;a &#39;(b c d))</code>, construct a list with a new head attached:</li>
-</ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">List</span><span class="subst">&lt;</span><span class="built_in">String</span><span class="subst">&gt;</span> <span class="built_in">list</span> <span class="subst">=</span> Arrays<span class="built_in">.</span>asList(<span class="string">"b"</span>, <span class="string">"c"</span>, <span class="string">"d"</span>);</div><div class="line"><span class="built_in">List</span><span class="subst">&lt;</span><span class="built_in">String</span><span class="subst">&gt;</span> cons_list <span class="subst">=</span> Stream<span class="built_in">.</span>concat(Stream<span class="built_in">.</span>of(<span class="string">"a"</span>), <span class="built_in">list</span><span class="built_in">.</span>stream())<span class="built_in">.</span>collect(Collectors<span class="built_in">.</span>toList());</div><div class="line">System<span class="built_in">.</span>out<span class="built_in">.</span>println(cons_list); <span class="comment">// [a, b, c, d]</span></div></pre></td></tr></table></figure>
-
-<ul>
-<li><code>(cons-stream n stream)</code>, construct a stream with a new head attached:</li>
-</ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">Stream cons_stream = Stream.concat(Stream.of(n), <span class="keyword">list</span>.stream());</div><div class="line">cons_stream.<span class="keyword">forEach</span>(System.out::<span class="keyword">print</span>); <span class="comment">// abcd</span></div></pre></td></tr></table></figure>
-
-<h3 id="4-_Hightlights">4. Hightlights</h3>
-<ul>
-<li>Simplified syntax</li>
-</ul>
-<p>Using <code>Lambda</code> and <code>Stream</code> APIs can reduce the complexity of code. This is pretty obvious.</p>
-<ul>
-<li>Easy to parallelize</li>
-</ul>
-<p>By using <code>Stream</code> APIs, one can easily parallelize the process simply by changing <code>stream()</code> to <code>parallelStream()</code>. For example:</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// Generate a list with 10000000 elements</span></div><div class="line">List&lt;Integer&gt; list = IntStream.range(<span class="number">0</span>, <span class="number">10000000</span>)</div><div class="line">                            .boxed().<span class="keyword">collect</span>(Collectors.<span class="keyword">toList</span>());</div><div class="line"></div><div class="line"><span class="comment">// Sequencial</span></div><div class="line"><span class="keyword">long</span> startTime = System.currentTimeMillis();</div><div class="line">List&lt;Integer&gt; evenList = list.stream()</div><div class="line">                            .filter(i-&gt;i%<span class="number">2</span>==<span class="number">0</span>).<span class="keyword">collect</span>(Collectors.<span class="keyword">toList</span>());</div><div class="line"><span class="keyword">long</span> estimatedTime = System.currentTimeMillis() - startTime;</div><div class="line"></div><div class="line"><span class="comment">// Parallelized</span></div><div class="line"><span class="keyword">long</span> startTime2 = System.currentTimeMillis();</div><div class="line">List&lt;Integer&gt; oddList  = list.parallelStream()</div><div class="line">                            .filter(i-&gt;i%<span class="number">2</span>!=<span class="number">0</span>).<span class="keyword">collect</span>(Collectors.<span class="keyword">toList</span>());</div><div class="line"><span class="keyword">long</span> estimatedTime2 = System.currentTimeMillis() - startTime2;</div><div class="line">System.out.<span class="keyword">println</span>(<span class="string">"Time1: "</span> + estimatedTime + <span class="string">" Time2: "</span> + estimatedTime2);</div><div class="line"></div><div class="line"><span class="comment">// Output:</span></div><div class="line"><span class="comment">// Time1: 1987 Time2: 1029</span></div></pre></td></tr></table></figure>
-
-<p>If the process doesn’t involve any synchronized variable or operation (here the collect operation is working on one list, therefore need to be locked and unlocked), the improvement would be much significant. The parallel processes is managed under the hood, which means one cannot assign explicitly how many threads to run. But in this way the code has more “cross platform” benifits, so that one don’t have change the parallel settings since everything is handled automatically.</p>
-<ul>
-<li>Laziness</li>
-</ul>
-<p>Harnessing the benifit of lazy evaluation will help to improve the efficiency of the program. One can define a lot of <code>Stream</code> but as long as it’s not followed by a terminal operation, it’s not executed. Furthermore, due to laziness feature of <code>Stream</code>, datas are generated “on the fly” instead of creating a whole list of elements and then iterate through them, not to mention <code>List</code> cannot be infinent, which a <code>Stream</code> can achieve easily.</p>
-<h3 id="5-_Limitations">5. Limitations</h3>
-<ul>
-<li>Functional interface limitation</li>
-</ul>
-<p>As mentioned before, lambdas in Java 8 are “Syntactic Sugars” to map “arrow style” to anonymous inner class definations. All lambdas must has a functional interface with matching signature. This is due to Java’s static type limitation. Although <code>java.util.function</code> package has provided a variaty of functional interfaces with generic types and compiler can use type inference to find the matching interface, one has to define his own interfaces if they’re not provided, for example, a lambda with 3 input arguments.</p>
-<ul>
-<li>External variable referencing</li>
-</ul>
-<p>Java does not allow changing the value or reference of a outside variable inside an anonymous inner class, and all variables that declared outside the anonymous class are inexplictly restrained to <code>final</code> inside. So this regulation also applies to lambdas.</p>
-<p>For example:</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">int a <span class="subst">=</span> <span class="number">1</span>;</div><div class="line">                </div><div class="line"><span class="keyword">Thread</span> t1 <span class="subst">=</span> <span class="literal">new</span> <span class="keyword">Thread</span>(<span class="literal">new</span> Runnable() {     </div><div class="line">    <span class="keyword">public</span> <span class="literal">void</span> run() {</div><div class="line">        a <span class="subst">=</span> <span class="number">2</span>; <span class="comment">// This cannot pass the compilation, because `a` is declared </span></div><div class="line">        <span class="comment">// inexplictly `final` inside, therefore can't be changed.</span></div><div class="line">    }</div><div class="line">});</div><div class="line"></div><div class="line"><span class="keyword">Thread</span> t2 <span class="subst">=</span> <span class="literal">new</span> <span class="keyword">Thread</span>(</div><div class="line">        ()<span class="subst">-&gt;</span>{a <span class="subst">=</span> <span class="number">2</span>;} ); <span class="comment">// This cannot pass either.</span></div></pre></td></tr></table></figure>
-
-<h3 id="6-_References">6. References</h3>
-<p>1: <a href="http://www.ibm.com/developerworks/java/library/j-java8lambdas/index.html" target="_blank" rel="external">http://www.ibm.com/developerworks/java/library/j-java8lambdas/index.html</a></p>
-<p>2: <a href="http://stackoverflow.com/questions/23007422/using-streams-with-primitives-data-types-and-corresponding-wrappers" target="_blank" rel="external">http://stackoverflow.com/questions/23007422/using-streams-with-primitives-data-types-and-corresponding-wrappers</a></p>
 
       
     </div>
@@ -463,9 +200,9 @@
     <div class="header">
       
   
-    <h2 class="title_link"><a href="/2014/08/18/Auto_Timestamp/">Fast Copying Timestamp on Mac</a>
+    <h2 class="title_link"><a href="/2015/03/25/leetcode-1/">leetcode_01 Two sum</a>
         <small>
-            <time datetime="2014-08-18T16:56:19.000Z">Aug 18 2014</time>
+            <time datetime="2015-03-25T16:18:58.000Z">Mar 25 2015</time>
         </small>
     </h2>
   
@@ -475,28 +212,17 @@
 
     <div class="entry">
       
-        <p>When I’m using Googe Docs to write logs for my lab work, it’ll be much more convenient to insert timestamp and I’m surprised that they don’t have this feature (Microsoft Word has it). </p>
-<p>But if you are using Mac OSX, this would be very easy to achive. Since there’s a pretty good command line tool called <code>date</code> that can print timestamp in multiple formats. The thing we need to do is to copy the standard output to the clipboard. </p>
-<p>There are 2 ways to do this:</p>
-<ul>
-<li>Using <code>Alfred</code>. <code>Alfred</code> is a tool to quick launch applications and it has a feature of quick run customized shell scripts. However, this feature is together with its <code>Power Pack</code>, which is limited to paid users. </li>
-<li>Using <code>automator</code>. <code>Automator</code> is a tool provided by Mac OSX that can pack scripts or recorded actions into an application or service. Here we choose this method.</li>
-</ul>
-<p>Step:</p>
-<ol>
-<li>launch <code>Automator</code> in <code>Launcher</code>. </li>
-<li>In menu bar, choose <code>File</code> -&gt; <code>New</code>, then choose <code>Application</code>.</li>
-<li>In the search bar search for <code>Run Shell Script</code>.</li>
-<li><p>In the right window, put in the following script:</p>
-<pre><code> date |tr <span class="operator">-d</span> <span class="string">'\n'</span>| pbcopy
-</code></pre></li>
-<li><p>In menu bar, choose <code>File</code> -&gt; <code>Save</code> to save your application, better to save it to <code>/Applications</code> for <code>Spotlight</code> to index. Here we name it as <code>TimeStamp</code>.</p>
-</li>
-</ol>
-<p>Voila! Now when you are using Google Docs or any other text editor, use <code>Spotlight</code> or <code>Alfred</code> to launch the application we just created, and press key <code>Command</code> + <code>V</code> to paste the timestamp to the document. You can also download my application here.<a href="/files/TimeStamp.zip">Download my TimeStamp.app</a></p>
-<p>Explaining the script:</p>
-<p>First <code>date</code> command will execute the <code>date</code> program and its output will be redirected to <code>tr</code> program, which with argument <code>-d &#39;\n&#39;</code>, will delete the last “endline” character. At last, the result will be past to <code>pbcopy</code> program to add it to the clipboard.</p>
-<p>Further more, we can also add arguments to <code>date</code> to customize the format of the timestamp. Here is a nice article about this. <a href="http://www.cyberciti.biz/faq/linux-unix-formatting-dates-for-display/" target="_blank" rel="external">Link.</a> For myself, I use this <code>date +&quot;%d/%m/%y %a %H:%M&quot;</code>, which print something like this: <code>18/08/14 Mon 20:25</code> .</p>
+        <p><a href="https://leetcode.com/problems/two-sum/" target="_blank" rel="external">leetcode problem site</a></p>
+<p>The easiest and slowest solution is very obvious, which has O(n^2) time complexity. Pseudo-code is as follows:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">foreach elementA <span class="operator">in</span> numbers:</div><div class="line">    foreach elementB <span class="operator">in</span> all elements <span class="command"><span class="keyword">on</span> <span class="title">the</span> <span class="title">left</span> <span class="title">side</span> <span class="title">of</span> <span class="title">elementA</span>:</span></div><div class="line">        <span class="keyword">if</span> elementA+elementB == target:</div><div class="line">            <span class="constant">return</span> <span class="operator">a</span> vector <span class="operator">with</span> indexA+<span class="number">1</span>, indexB+<span class="number">1</span></div></pre></td></tr></table></figure>
+
+<p>This solution will be judged time out by Leetcode oj.</p>
+<p>My first attempt is as follows, which has O(nlogn) complexity. Pseudo-code is as follows:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">sortedNumbers = <span class="built_in">sort</span>(numbers)</div><div class="line">indexL, indexR = <span class="number">0</span>, <span class="built_in">len</span>(numbers)-<span class="number">1</span></div><div class="line"></div><div class="line"><span class="keyword">while</span>(indexL!=indexR):</div><div class="line">    L, R = sortedNumbers[indexL], sortedNumbers[indexR]</div><div class="line">    s = L + R</div><div class="line">    <span class="keyword">if</span> s &gt;target:</div><div class="line">        R<span class="comment">--</span></div><div class="line">    elif s &lt; target:</div><div class="line">        L++</div><div class="line">    <span class="keyword">else</span>:</div><div class="line">        <span class="constant">return</span> <span class="operator">a</span> vector <span class="operator">with</span> (L+<span class="number">1</span>, R+<span class="number">1</span>)</div></pre></td></tr></table></figure>
+
+<p>Then inspired by my friend, using Hash table will reduce the complexity to O(n). The cxx code is as follows:</p>
+<figure class="highlight C++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="keyword">class</span> Solution {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="stl_container"><span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;</span> twoSum(<span class="stl_container"><span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;</span> &numbers, <span class="keyword">int</span> target) {</div><div class="line">        <span class="stl_container"><span class="built_in">unordered_map</span>&lt;<span class="keyword">int</span>, <span class="keyword">int</span>&gt;</span> hmap;</div><div class="line">        <span class="stl_container"><span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;</span> result;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;numbers.size(); i++){</div><div class="line">            <span class="keyword">int</span> a = numbers[i];</div><div class="line">            <span class="keyword">int</span> toFind = target-a;</div><div class="line">            <span class="keyword">if</span>(hmap.find(toFind)!=hmap.end()) {</div><div class="line">                result.push_back(hmap[toFind]+<span class="number">1</span>);</div><div class="line">                result.push_back(i+<span class="number">1</span>);</div><div class="line">                <span class="keyword">return</span> result;</div><div class="line">            }</div><div class="line">            hmap[numbers[i]] = i;</div><div class="line">        }</div><div class="line">        <span class="keyword">return</span> result;</div><div class="line">    }</div><div class="line">};</div></pre></td></tr></table></figure>
+
 
       
     </div>
@@ -544,6 +270,18 @@
   <ul class="entry">
     
       <li>
+        <a href="/2015/03/25/leetcode-03/">leetcode_03 Longest Substring Without Repeating Characters</a>
+      </li>
+    
+      <li>
+        <a href="/2015/03/25/leetcode-02/">leetcode_02 Add two numbers</a>
+      </li>
+    
+      <li>
+        <a href="/2015/03/25/leetcode-1/">leetcode_01 Two sum</a>
+      </li>
+    
+      <li>
         <a href="/2015/01/08/optimizing-cnn-with-opencl/">Optimizing Pattern Inference of Convolutional Neural Network with OpenCL</a>
       </li>
     
@@ -584,7 +322,7 @@
 <div class="widget tagcloud">
   <h3 class="title">Tag Cloud</h3>
   <div class="entry">
-    <a href="/tags/ML/" style="font-size: NaNpx;">ML</a><a href="/tags/Mac-shell/" style="font-size: NaNpx;">Mac shell</a><a href="/tags/OpenCL-CNN/" style="font-size: NaNpx;">OpenCL CNN</a><a href="/tags/embedded/" style="font-size: NaNpx;">embedded</a><a href="/tags/hexo/" style="font-size: NaNpx;">hexo</a><a href="/tags/java/" style="font-size: NaNpx;">java</a><a href="/tags/opencv/" style="font-size: NaNpx;">opencv</a>
+    <a href="/tags/ML/" style="font-size: 10.00px;">ML</a><a href="/tags/Mac-shell/" style="font-size: 10.00px;">Mac shell</a><a href="/tags/OpenCL-CNN/" style="font-size: 10.00px;">OpenCL CNN</a><a href="/tags/embedded/" style="font-size: 10.00px;">embedded</a><a href="/tags/hexo/" style="font-size: 10.00px;">hexo</a><a href="/tags/java/" style="font-size: 10.00px;">java</a><a href="/tags/leetcode/" style="font-size: 20.00px;">leetcode</a><a href="/tags/opencv/" style="font-size: 10.00px;">opencv</a>
   </div>
 </div>
 
