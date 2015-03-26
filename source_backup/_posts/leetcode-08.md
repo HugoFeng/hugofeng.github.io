@@ -14,6 +14,18 @@ The requirements are as follows:
 * if overflow happens, return `INT_MAX if` it's positive, or `INT_MIN` if negtive
 * if any law above is violated, 0 is returned
 
+There's one thing that worse noting:
+
+In the first attemp, I wrote line 33 this way:
+
+    while(index<len && '0'<=str[index]<='9')
+
+And after several test failures, I located this bug, that `'0'<=a<='9'` will always be true or 1 no matter what `a` is.
+
+Then I realized that in C++, it's different from Python. the operator `<=` is evaluated from left to right [ref](http://en.wikipedia.org/wiki/Operators_in_C_and_C%2B%2B). 
+
+So first `'0'<=a` is evaluated as `0` or `1`, here we note it as `result1`, then `result1<='9'` is evaluated, which will always be `1` as long as the last compared value `'9'` is larger or equal to 1....
+
 ~~~ C++
 
 class Solution {
