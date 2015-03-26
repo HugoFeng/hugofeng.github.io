@@ -101,6 +101,69 @@
     <div class="header">
       
   
+    <h2 class="title_link"><a href="/2014/04/25/float-operations-on-arm/">Floating point operations on ARM processor</a>
+        <small>
+            <time datetime="2014-04-25T19:32:34.000Z">Apr 25 2014</time>
+        </small>
+    </h2>
+  
+
+
+    </div>
+
+    <div class="entry">
+      
+        <p>This article is a brief introduction of different implementations of floating point operation on an ARM processor.</p>
+<h3 id="1-_Early_ages">1. Early ages</h3>
+<p>There’s no coprocessor for floating point operations on ARM, those operations are done by CPU, means of which is called <code>Float Math Emulation</code>. Normally each float point operation costs thousands of cycles, which is very inefficient. </p>
+<h3 id="2-_Soft-float">2. Soft-float</h3>
+<p>This is for those situations where the CPU does not contain a <code>floating point unit(FPU)</code>, which is a built-in coprocessor on CPU to deal with floating point operations. </p>
+<p>There are 2 different ways to do floating point operations without FPU: </p>
+<ol>
+<li><p>The kernel will trap all the opcodes related to the FPU and then perform the calculations itself [1]. This is called <code>NWFPE</code> (NetWinder Floating Point Emulator), however, this has now been removed from ARM kernel [2]. As I mentioned before, this is the old fashioned way of implementation, which involves raising of invalid instruction exceptions each time the situation occurs [3]. And this can be very expensive for computation. </p>
+</li>
+<li><p>All floating point operations are translated to specific inline function calls by compiler. This is done by passing flag <code>-mfloat-abi=soft</code> when using <code>gcc</code>, and gcc will use built in software(library) to emulate.</p>
+</li>
+</ol>
+<h3 id="3-_Hard-float">3. Hard-float</h3>
+<p>Nowadays, many chips has hardware <code>FPU</code> support to accelerate fp operations, for ARM familis, this unit is often called <code>VFP</code> (Vector Floating-Point coprocessor). VFP is a fully IEEE-754 compatible floating point unit. But later a much more powerful NEON Advanced SIMD unit was introduced and is suggested instead of VFP by Architecture Reference Manual.</p>
+
+      
+    </div>
+
+	
+		
+			<a href="/2014/04/25/float-operations-on-arm/#more" class="more-link">Read More</a>
+		
+	
+
+	<hr/>
+
+	
+  </div>
+</article>
+
+
+
+    
+        <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <div class="header">
+      
+  
     <h2 class="title_link"><a href="/2014/04/17/shell-script-for-hexo-source-folder-backup/">Shell Script for Hexo source folder backup</a>
         <small>
             <time datetime="2014-04-17T18:45:20.000Z">Apr 17 2014</time>

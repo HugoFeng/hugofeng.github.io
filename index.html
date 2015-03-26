@@ -96,6 +96,65 @@
     <div class="header">
       
   
+    <h2 class="title_link"><a href="/2015/03/26/leetcode-08/">leetcode_08 String to Integer (atoi)</a>
+        <small>
+            <time datetime="2015-03-26T13:56:55.000Z">Mar 26 2015</time>
+        </small>
+    </h2>
+  
+
+
+    </div>
+
+    <div class="entry">
+      
+        <p><a href="https://leetcode.com/problems/string-to-integer-atoi/" target="_blank" rel="external">leetcode problem site</a></p>
+<p>The requirements are as follows:</p>
+<ul>
+<li>0s cannot be in front of a sign</li>
+<li>sign can appear at most once</li>
+<li>there shouldn’t be spaces between a sign and the real values</li>
+<li>the function will try to interpret as much numbers as it can, which means if a character other than numbers appear after a continuous number sequence, the rest of the string will be ignored, and will return the value interpreted so far</li>
+<li>if overflow happens, return <code>INT_MAX if</code> it’s positive, or <code>INT_MIN</code> if negtive</li>
+<li>if any law above is violated, 0 is returned</li>
+</ul>
+<figure class="highlight C++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="keyword">class</span> Solution {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="keyword">int</span> atoi(<span class="built_in">string</span> str) {</div><div class="line">        <span class="keyword">int</span> len = str.length();</div><div class="line">        <span class="keyword">int</span> sign_count = <span class="number">0</span>;</div><div class="line">        <span class="keyword">int</span> index=<span class="number">0</span>;</div><div class="line">        <span class="keyword">int</span> sign=<span class="number">1</span>;</div><div class="line">        <span class="comment">// skip white spaces at the front</span></div><div class="line">        <span class="keyword">while</span>(str[index]==<span class="string">' '</span>) index++;</div><div class="line">        <span class="comment">// skip sign</span></div><div class="line">        <span class="keyword">while</span>(str[index]==<span class="string">'+'</span> || str[index]==<span class="string">'-'</span>) {</div><div class="line">            <span class="keyword">if</span>(str[index]==<span class="string">'+'</span>) sign_count++;</div><div class="line">            <span class="keyword">else</span> <span class="keyword">if</span>(str[index]==<span class="string">'-'</span>) {</div><div class="line">                sign_count++;</div><div class="line">                sign *= -<span class="number">1</span>;</div><div class="line">            }</div><div class="line">            <span class="comment">// if multiple signs appears, imediately stop</span></div><div class="line">            <span class="keyword">if</span>(sign_count&gt;<span class="number">1</span>) <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">            <span class="comment">// if there're spaces after sign</span></div><div class="line">            <span class="keyword">if</span>(sign_count&gt;<span class="number">0</span> && str[index]==<span class="string">' '</span>) <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">            index++;</div><div class="line">        }</div><div class="line">        <span class="comment">// again, skip '0's</span></div><div class="line">        <span class="keyword">while</span>(str[index]==<span class="string">'0'</span>) index++;</div><div class="line">        <span class="comment">// the following is not numbers </span></div><div class="line">        <span class="comment">// (if all string contents are already read, str[index]=='\0', which is also included here.)</span></div><div class="line">        <span class="keyword">if</span>(str[index]&lt;<span class="string">'0'</span> || str[index]&gt;<span class="string">'9'</span>) <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">        <span class="comment">// now, the rest should be numbers that construct a none-zero integer.</span></div><div class="line">        <span class="comment">// if anything other than 0~9 appears, return 0;</span></div><div class="line">        <span class="comment">// The rest characters that are not numbers are ignored.</span></div><div class="line">        <span class="comment">// Carefull about overflow.</span></div><div class="line">        <span class="keyword">long</span> <span class="keyword">long</span> absolute=<span class="number">0</span>;</div><div class="line">        <span class="keyword">while</span>(index&lt;len && <span class="string">'0'</span>&lt;=str[index] && str[index]&lt;=<span class="string">'9'</span>){</div><div class="line">            absolute = absolute*<span class="number">10</span> + str[index++]-<span class="string">'0'</span>;</div><div class="line">            <span class="comment">// overflow, don't do this check at the end,</span></div><div class="line">            <span class="comment">// because long long absolute can also be overflowed...</span></div><div class="line">            <span class="keyword">if</span>(absolute&gt;INT_MAX || absolute&lt;INT_MIN) <span class="keyword">return</span> sign&gt;<span class="number">0</span>?INT_MAX:INT_MIN;</div><div class="line">        }</div><div class="line">        </div><div class="line">        <span class="comment">// if not overflowed</span></div><div class="line">        <span class="keyword">return</span> (<span class="keyword">int</span>)(sign*absolute);</div><div class="line">    }</div><div class="line">};</div></pre></td></tr></table></figure>
+
+
+      
+    </div>
+
+	
+		
+	
+
+	<hr/>
+
+	
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <div class="header">
+      
+  
     <h2 class="title_link"><a href="/2015/03/26/leetcode-07/">leetcode_07 Reverse Integer</a>
         <small>
             <time datetime="2015-03-26T11:00:15.000Z">Mar 26 2015</time>
@@ -180,59 +239,6 @@
 
 
 
-  <article class="post">
-  
-    <div class="gallery">
-  <div class="photoset">
-    
-      <img src="">
-    
-  </div>
-  <div class="control">
-    <div class="prev"></div>
-    <div class="next"></div>
-  </div>
-</div>
-  
-  <div class="post-content">
-    <div class="header">
-      
-  
-    <h2 class="title_link"><a href="/2015/03/25/leetcode-02/">leetcode_02 Add two numbers</a>
-        <small>
-            <time datetime="2015-03-25T17:15:45.000Z">Mar 25 2015</time>
-        </small>
-    </h2>
-  
-
-
-    </div>
-
-    <div class="entry">
-      
-        <p><a href="https://leetcode.com/problems/add-two-numbers/" target="_blank" rel="external">leetcode problem site</a></p>
-<p>I’m working on projects in functional programming languages these days, so recursion is used in this case.</p>
-<p>Need to be causious when dealing with input cases like {0, 0} and numbers with a length difference larger than 1. </p>
-<p>Then specify the stop case of the recursion where the two input nodes are both NULLs, but don’t forget there still may be a non-zero complement value. </p>
-<figure class="highlight C++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * Definition for singly-linked list.</div><div class="line"> * struct ListNode {</div><div class="line"> *     int val;</div><div class="line"> *     ListNode *next;</div><div class="line"> *     ListNode(int x) : val(x), next(NULL) {}</div><div class="line"> * };</div><div class="line"> */</div><div class="line"><span class="keyword">class</span> Solution {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    ListNode *addTwoNumbers(ListNode *l1, ListNode *l2) {</div><div class="line">        <span class="keyword">return</span> addTwoNumbers(l1, l2, <span class="number">0</span>);</div><div class="line">    }</div><div class="line">    </div><div class="line">    ListNode *addTwoNumbers(ListNode *l1, ListNode *l2, <span class="keyword">int</span> complement) {</div><div class="line">        <span class="keyword">if</span>(l1!=<span class="keyword">nullptr</span> && l2!=<span class="keyword">nullptr</span>){</div><div class="line">            <span class="keyword">int</span> sum = l1-&gt;val + l2-&gt;val + complement;</div><div class="line">            ListNode *pNode = <span class="keyword">new</span> ListNode(sum%<span class="number">10</span>);</div><div class="line">            pNode-&gt;next = addTwoNumbers(l1-&gt;next, l2-&gt;next, sum/<span class="number">10</span>);</div><div class="line">            <span class="keyword">return</span> pNode;</div><div class="line">        }<span class="keyword">else</span> <span class="keyword">if</span>(l1==<span class="keyword">nullptr</span> && l2!=<span class="keyword">nullptr</span>){</div><div class="line">            <span class="keyword">int</span> sum = l2-&gt;val + complement;</div><div class="line">            ListNode *pNode = <span class="keyword">new</span> ListNode(sum%<span class="number">10</span>);</div><div class="line">            pNode-&gt;next = addTwoNumbers(<span class="keyword">nullptr</span>, l2-&gt;next, sum/<span class="number">10</span>);</div><div class="line">            <span class="keyword">return</span> pNode;</div><div class="line">        }<span class="keyword">else</span> <span class="keyword">if</span>(l1!=<span class="keyword">nullptr</span> && l2==<span class="keyword">nullptr</span>){</div><div class="line">            <span class="keyword">int</span> sum = l1-&gt;val + complement;</div><div class="line">            ListNode *pNode = <span class="keyword">new</span> ListNode(sum%<span class="number">10</span>);</div><div class="line">            pNode-&gt;next = addTwoNumbers(l1-&gt;next, <span class="keyword">nullptr</span>, sum/<span class="number">10</span>);</div><div class="line">            <span class="keyword">return</span> pNode;</div><div class="line">        }<span class="keyword">else</span>{ <span class="comment">// There's no number left to add, then add a complement node</span></div><div class="line">               <span class="comment">// if needed.</span></div><div class="line">            <span class="keyword">return</span> complement?(<span class="keyword">new</span> ListNode(<span class="number">1</span>)):<span class="keyword">nullptr</span>;</div><div class="line">        }</div><div class="line">    }</div><div class="line">};</div></pre></td></tr></table></figure>
-
-
-      
-    </div>
-
-	
-		
-	
-
-	<hr/>
-
-	
-  </div>
-</article>
-
-
-
-
 
 
 	<nav id="pagination">
@@ -261,6 +267,10 @@
 <div class="widget tag">
   <h3 class="title">Recent Posts</h3>
   <ul class="entry">
+    
+      <li>
+        <a href="/2015/03/26/leetcode-08/">leetcode_08 String to Integer (atoi)</a>
+      </li>
     
       <li>
         <a href="/2015/03/26/leetcode-07/">leetcode_07 Reverse Integer</a>

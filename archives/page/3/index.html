@@ -101,6 +101,199 @@
     <div class="header">
       
   
+    <h2 class="title_link"><a href="/2014/08/28/java8_lambda_stream/">Lambda and Stream in Java 8</a>
+        <small>
+            <time datetime="2014-08-28T18:05:57.000Z">Aug 28 2014</time>
+        </small>
+    </h2>
+  
+
+
+    </div>
+
+    <div class="entry">
+      
+        <h3 id="1-_Introduction">1. Introduction</h3>
+<p> This article introduces the new functional-programming features supported in Java 8. It first talks about the basic ways to implement lambdas and streams in the latest version of JDK, and then, pros and cons of this new feature are analyzed. </p>
+<p> We assume you are already familiar with functional programming styles and have dealt with lambdas and streams in other languages. So in this article we are not going to introduce these things in conceptual level, and some of them are compared with Scheme.</p>
+<h3 id="2-_What_is_a_lambda_and_a_stream_in_Java_8?">2. What is a lambda and a stream in Java 8?</h3>
+<h4 id="2-1_Lambda_expression">2.1 Lambda expression</h4>
+<p>Java 8 provides a new package <code>java.util.function</code> containing functional interfaces, and a lambda expression is an instance of a subtype of <code>Object</code> implementing one of the functional interfaces. Consider this as ‘Syntactic Sugar’ mapping lambda expressions syntaxes to an anonymous class. </p>
+<p>For example:</p>
+<ul>
+<li>Old Java style using anonymous inner class</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">Thread t1 = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Runnable() {     </div><div class="line">            <span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span>() {</div><div class="line">                System.<span class="keyword">out</span>.println(<span class="string">"Hey there anonymous!"</span>);</div><div class="line">            }</div><div class="line">        });</div></pre></td></tr></table></figure>
+
+<ul>
+<li>Java 8 lambda style</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">Thread t2 = <span class="keyword">new</span> Thread(</div><div class="line">                    <span class="function"><span class="params">()</span>-&gt;</span>{System.out.println(<span class="string">"Hey lambda!"</span>);} </div><div class="line">                );</div></pre></td></tr></table></figure>
+
+<p>The syntax of a lambda function is like “()-&gt;{…}”, where the argument are put in brackets, followed by an arrow alike sign “-&gt;”, with the body of the lambda as the last part. </p>
+<p>There are following categories [1] of interfaces declared in <code>java.util.function</code> package:</p>
+<ul>
+<li><strong>Function</strong>: Takes a single parameter, returns result based on parameter value</li>
+<li><strong>Predicate</strong>: Takes a single parameter, returns a boolean result based on parameter value</li>
+<li><strong>BiFunction</strong>: Takes two parameters, returns result based on parameter value</li>
+<li><strong>Supplier</strong>: Takes no parameters, returns a result</li>
+<li><strong>Consumer</strong>: Takes a single parameter with no return (void)</li>
+</ul>
+<p>Beside these, one can also declare their own functional interfaces. Generally, the new java compiler accepts all interfaces declared with exactly one method as a functional interface, but one can also explicitly declare one by adding <code>@FunctionalInterface</code> annotation. For example:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="keyword">class</span> Test1 {</div><div class="line">    @FunctionalInterface  <span class="comment">// This is optional.</span></div><div class="line">    <span class="keyword">public</span> <span class="keyword">interface</span> Discount { <span class="keyword">double</span> apply(<span class="keyword">double</span> originalPrice); }</div><div class="line">    </div><div class="line">    Discount discount;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setDiscount</span>(Discount d){ discount = d; }</div><div class="line">    </div><div class="line">    <span class="keyword">public</span> <span class="keyword">double</span> <span class="title">getPriceAfterDiscount</span>(<span class="keyword">double</span> price){ <span class="keyword">return</span> discount.apply(price); }</div><div class="line"></div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span>(String[] args) {</div><div class="line">        Test1 test1 = <span class="keyword">new</span> Test1();</div><div class="line">        <span class="keyword">double</span> applePrice = <span class="number">1.0</span>;</div><div class="line"></div><div class="line">        <span class="comment">// With type inference, compiler will expand this lambda to </span></div><div class="line">        <span class="comment">// an instance of anonymous class implementing Discount interface</span></div><div class="line">        test1.setDiscount(p -&gt; <span class="number">0.8</span>*p); </div><div class="line"></div><div class="line">        <span class="keyword">double</span> applePriceWithDiscount = test1. getPriceAfterDiscount(applePrice);</div><div class="line">        System.<span class="keyword">out</span>.println(applePriceWithDiscount); <span class="comment">// 0.8</span></div><div class="line">    }</div><div class="line">    </div><div class="line">}</div></pre></td></tr></table></figure>
+
+<h4 id="2-2_Stream">2.2 Stream</h4>
+<p>Stream API is provided in <code>java.util.stream</code> package. Stream is built on the basis of lambda with lazy evaluation feature. It is an enhancement made to collection interfaces. It is extremely handy for processing data.</p>
+<p>Due to backward compatibility reasons, simply adding additional methods to an interface will require rewriting all the classes implementing this interface. So in order to add additional features to old <code>Collection</code> Class, Java 8 introduces <code>default method</code>. <code>Default method</code> is an default implementation of a method, and is defined in the original class of the interface. With the help of <code>default methods</code>, subtypes of <code>Collection</code> class, classes user defined with old version Java, can work without realizing the added interfaces explicitly, so that adding new features to old classes will be invisible to users.</p>
+<p><code>Stream</code> is a sequence of elements supporting sequential and parallel aggregate operations. It’s not a data structure so it doesn’t store anything. It takes a lambda expression as an argument and returns another <code>Stream</code>, therefore, it can be made into cascades or pipelines.</p>
+<p>Using <code>Stream</code> is very intuitive:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">IntStream<span class="built_in">.</span><span class="keyword">iterate</span>(<span class="number">0</span>, i<span class="subst">-&gt;</span>i<span class="subst">+</span><span class="number">1</span>)</div><div class="line">            <span class="built_in">.</span>filter(i<span class="subst">-&gt;</span>i<span class="subst">&gt;</span><span class="number">5</span>)</div><div class="line">            <span class="built_in">.</span>limit(<span class="number">3</span>)</div><div class="line">            <span class="built_in">.</span>forEach(System<span class="built_in">.</span>out<span class="tag">::println</span>);</div><div class="line"><span class="comment">// Output:</span></div><div class="line"><span class="comment">// 6</span></div><div class="line"><span class="comment">// 7</span></div><div class="line"><span class="comment">// 8</span></div></pre></td></tr></table></figure>
+
+<h3 id="3-_How_to_implement">3. How to implement</h3>
+<h4 id="3-1_Using_Lambda_expressions_in_Java_8">3.1 Using Lambda expressions in Java 8</h4>
+<ul>
+<li>Shortest way</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">() -&gt; <span class="number">5</span> // <span class="type">Without</span> input variable, <span class="keyword">return</span> a number</div><div class="line">x -&gt; <span class="number">2</span> * x // <span class="type">Take</span> <span class="number">1</span> input variable, <span class="keyword">return</span> <span class="literal">result</span> <span class="keyword">of</span> multipling by <span class="number">2</span></div><div class="line">( x, y ) -&gt; x - y // <span class="type">Take</span> <span class="number">2</span> input variables, <span class="keyword">return</span> their substraction</div></pre></td></tr></table></figure>
+
+<ul>
+<li>With type specification</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="params">(int x, int y)</span> -&gt;</span> x + y <span class="regexp">//</span> Take <span class="number">2</span> integers <span class="keyword">and</span> <span class="keyword">return</span> their sum</div><div class="line"><span class="function"><span class="params">(String s)</span> -&gt;</span> System.out.println(s) <span class="regexp">//</span> Take <span class="number">1</span> String input <span class="keyword">and</span> <span class="keyword">return</span> nothing</div></pre></td></tr></table></figure>
+
+<ul>
+<li>Using functional interface</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">@FunctionalInterface</div><div class="line"><span class="keyword">public</span> <span class="keyword">interface</span> Discount {</div><div class="line">    <span class="keyword">public</span> <span class="keyword">double</span> <span class="title">apply</span>(<span class="keyword">double</span> originalPrice);</div><div class="line">}</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span>(String[] args) {</div><div class="line">    Discount discount = (x) -&gt; <span class="number">0.7</span> * x;</div><div class="line">    System.<span class="keyword">out</span>.println(discount.apply(<span class="number">100</span>)); <span class="comment">// 70.0</span></div><div class="line">}</div></pre></td></tr></table></figure>
+
+<ul>
+<li>Using Function type</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">java.util.<span class="keyword">function</span>.<span class="keyword">Function</span>&lt;<span class="built_in">Double</span>, <span class="built_in">Double</span>&gt; discountFunction = (x) -&gt; <span class="number">0.6</span>*x;</div></pre></td></tr></table></figure>
+
+<h4 id="3-2_Using_Stream_APIs_in_Java_8">3.2 Using Stream APIs in Java 8</h4>
+<p>For operating with <code>Stream</code> APIs, there are 3 kinds of methods:</p>
+<ul>
+<li><p><strong>Creating a stream</strong>: <code>Stream.iterate()</code>, <code>Stream.generate()</code>, <code>Stream.of()</code>, <code>IntStream.of()</code>, <code>Array.asList().stream()</code>, <code>list.stream()</code>, <code>Array.stream()</code>, <code>String.chars()</code></p>
+</li>
+<li><p><strong>Intermediate Operations</strong>: <code>peek()</code>, <code>map()</code>, <code>filter()</code>, <code>sorted()</code>, <code>limit()</code></p>
+</li>
+</ul>
+<ul>
+<li><strong>Terminal Operations</strong>: <code>reduce()</code>, <code>count()</code>, <code>forEach()</code>, <code>match()</code>, <code>findFirst()</code></li>
+</ul>
+<p>The first kind initially generate a stream from an existing <code>Collection</code> instance or from a pair of <code>seed</code> and <code>function</code>.</p>
+<p>Intermediate operations accept lambda expression as arguments and return a new <code>Stream</code> with “processed” elements. It must be followed by a terminal operation, other wise, due to laziness feature, it will not be executed.</p>
+<p>Terminal operations either doesn’t return anything or return a new instance of <code>Collection</code>.</p>
+<p>Example:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">IntStream<span class="built_in">.</span><span class="keyword">iterate</span>(<span class="number">0</span>, i<span class="subst">-&gt;</span>i<span class="subst">+</span><span class="number">1</span>)</div><div class="line">            <span class="built_in">.</span>filter(i<span class="subst">-&gt;</span>i<span class="subst">&gt;</span><span class="number">5</span>)</div><div class="line">            <span class="built_in">.</span>limit(<span class="number">3</span>)</div><div class="line">            <span class="built_in">.</span>forEach(System<span class="built_in">.</span>out<span class="tag">::println</span>);</div><div class="line"><span class="comment">// Output:</span></div><div class="line"><span class="comment">// 6</span></div><div class="line"><span class="comment">// 7</span></div><div class="line"><span class="comment">// 8</span></div></pre></td></tr></table></figure>
+
+<p>Here, it creates an int stream by assigning an initial value with a lambda expression, which is executed to update the value due to lazy evaluation. Then the stream is passed to an intermediate operation <code>filter</code>, which filters out the values that doesn’t return <code>True</code> in the predicate lambda expression. After that, it is passed to another intermediate operation <code>limit</code>, which stops the stream from generating new values once it receives 3 values. At the end, it uses a terminal operation <code>forEach</code> to do the follow up operation printing out each element it receives.</p>
+<p>Note that primitive types should be carefully used in Java <code>Stream</code>.</p>
+<p>For example[2]:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">final</span> Integer[] integers = <span class="comment">{1, 2, 3}</span>;</div><div class="line"><span class="keyword">final</span> int[]     ints     = <span class="comment">{1, 2, 3}</span>;</div><div class="line"></div><div class="line">Stream.<span class="keyword">of</span>(integers).forEach(System.<span class="keyword">out</span>::println); <span class="comment">//That works just fine</span></div><div class="line">Stream.<span class="keyword">of</span>(ints).forEach(System.<span class="keyword">out</span>::println);     <span class="comment">//That doesn't</span></div><div class="line">IntStream.<span class="keyword">of</span>(ints).forEach(System.<span class="keyword">out</span>::println);  <span class="comment">//Have to use IntStream instead</span></div></pre></td></tr></table></figure>
+
+<p>This is because in <code>Stream</code> package, Java APIs are defined using generic types <code>Stream&lt;T&gt;</code> which only accepts a Class type. Luckily, there’re special APIs to specifically deal with primitive types: <code>IntStream</code>, <code>LongStream</code> and <code>DoubleStream</code>. But also be carefull using these primitive type streams. For example:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">IntStream.range(<span class="number">0</span>, <span class="number">10</span>).<span class="keyword">collect</span>(Collectors.<span class="keyword">toList</span>());</div><div class="line"><span class="comment">// Cannot compile...</span></div><div class="line"></div><div class="line">IntStream.range(<span class="number">0</span>, <span class="number">10</span>).boxed().<span class="keyword">collect</span>(Collectors.<span class="keyword">toList</span>());</div><div class="line"><span class="comment">// Works!</span></div></pre></td></tr></table></figure>
+
+<p>Primitive types must be boxed to Objects in order to follow up by a <code>collect</code> operation.</p>
+<h4 id="3-3_Comparing_with_Scheme">3.3 Comparing with Scheme</h4>
+<ul>
+<li><code>(car list)</code>, get the head of a list:</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">List</span><span class="subst">&lt;</span><span class="built_in">Integer</span><span class="subst">&gt;</span> <span class="built_in">list</span> <span class="subst">=</span> Arrays<span class="built_in">.</span>asList(<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>);</div><div class="line"></div><div class="line"><span class="built_in">Integer</span> car <span class="subst">=</span> <span class="built_in">list</span><span class="built_in">.</span>stream()<span class="built_in">.</span>findFirst()<span class="built_in">.</span>get();</div><div class="line">System<span class="built_in">.</span>out<span class="built_in">.</span>println(<span class="string">"Car: "</span> <span class="subst">+</span> car); <span class="comment">// Car: 0</span></div></pre></td></tr></table></figure>
+
+<ul>
+<li><code>(cdr list)</code>, get the rest of a list:</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">List</span><span class="subst">&lt;</span><span class="built_in">Integer</span><span class="subst">&gt;</span> cdr <span class="subst">=</span> <span class="built_in">list</span><span class="built_in">.</span>stream()<span class="built_in">.</span><span class="keyword">skip</span>(<span class="number">1</span>)<span class="built_in">.</span>collect(Collectors<span class="built_in">.</span>toList());</div><div class="line">System<span class="built_in">.</span>out<span class="built_in">.</span>println(<span class="string">"Cdr: "</span> <span class="subst">+</span> cdr); <span class="comment">// Cdr: [1, 2, 3, 4]</span></div></pre></td></tr></table></figure>
+
+<ul>
+<li><code>(stream-car stream)</code>, get the first element of a stream:</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">Integer stream_car = list.stream().findFirst().<span class="keyword">get</span>();</div><div class="line">System.<span class="keyword">out</span>.println(stream_car); <span class="comment">// 0</span></div></pre></td></tr></table></figure>
+
+<ul>
+<li><code>(stream-cdr stream)</code>, get the rest of of the stream:</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">Stream s = <span class="keyword">list</span>.stream();</div><div class="line">s.<span class="keyword">forEach</span>(System.out::<span class="keyword">print</span>); <span class="comment">// 01234</span></div><div class="line">Stream stream_cdr1 = s.skip(<span class="number">1</span>); <span class="comment">// Error: stream has already been operated upon or closed</span></div><div class="line"></div><div class="line">Stream s2 = <span class="keyword">list</span>.stream();</div><div class="line">Stream stream_cdr2 = s2.skip(<span class="number">1</span>); <span class="comment">// Didn't end with a terminal operation, skip() is not computed</span></div><div class="line">stream_cdr2.<span class="keyword">forEach</span>(System.out::<span class="keyword">print</span>); <span class="comment">// 1234</span></div></pre></td></tr></table></figure>
+
+<ul>
+<li><code>(cons &#39;a &#39;(b c d))</code>, construct a list with a new head attached:</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">List</span><span class="subst">&lt;</span><span class="built_in">String</span><span class="subst">&gt;</span> <span class="built_in">list</span> <span class="subst">=</span> Arrays<span class="built_in">.</span>asList(<span class="string">"b"</span>, <span class="string">"c"</span>, <span class="string">"d"</span>);</div><div class="line"><span class="built_in">List</span><span class="subst">&lt;</span><span class="built_in">String</span><span class="subst">&gt;</span> cons_list <span class="subst">=</span> Stream<span class="built_in">.</span>concat(Stream<span class="built_in">.</span>of(<span class="string">"a"</span>), <span class="built_in">list</span><span class="built_in">.</span>stream())<span class="built_in">.</span>collect(Collectors<span class="built_in">.</span>toList());</div><div class="line">System<span class="built_in">.</span>out<span class="built_in">.</span>println(cons_list); <span class="comment">// [a, b, c, d]</span></div></pre></td></tr></table></figure>
+
+<ul>
+<li><code>(cons-stream n stream)</code>, construct a stream with a new head attached:</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">Stream cons_stream = Stream.concat(Stream.of(n), <span class="keyword">list</span>.stream());</div><div class="line">cons_stream.<span class="keyword">forEach</span>(System.out::<span class="keyword">print</span>); <span class="comment">// abcd</span></div></pre></td></tr></table></figure>
+
+<h3 id="4-_Hightlights">4. Hightlights</h3>
+<ul>
+<li>Simplified syntax</li>
+</ul>
+<p>Using <code>Lambda</code> and <code>Stream</code> APIs can reduce the complexity of code. This is pretty obvious.</p>
+<ul>
+<li>Easy to parallelize</li>
+</ul>
+<p>By using <code>Stream</code> APIs, one can easily parallelize the process simply by changing <code>stream()</code> to <code>parallelStream()</code>. For example:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// Generate a list with 10000000 elements</span></div><div class="line">List&lt;Integer&gt; list = IntStream.range(<span class="number">0</span>, <span class="number">10000000</span>)</div><div class="line">                            .boxed().<span class="keyword">collect</span>(Collectors.<span class="keyword">toList</span>());</div><div class="line"></div><div class="line"><span class="comment">// Sequencial</span></div><div class="line"><span class="keyword">long</span> startTime = System.currentTimeMillis();</div><div class="line">List&lt;Integer&gt; evenList = list.stream()</div><div class="line">                            .filter(i-&gt;i%<span class="number">2</span>==<span class="number">0</span>).<span class="keyword">collect</span>(Collectors.<span class="keyword">toList</span>());</div><div class="line"><span class="keyword">long</span> estimatedTime = System.currentTimeMillis() - startTime;</div><div class="line"></div><div class="line"><span class="comment">// Parallelized</span></div><div class="line"><span class="keyword">long</span> startTime2 = System.currentTimeMillis();</div><div class="line">List&lt;Integer&gt; oddList  = list.parallelStream()</div><div class="line">                            .filter(i-&gt;i%<span class="number">2</span>!=<span class="number">0</span>).<span class="keyword">collect</span>(Collectors.<span class="keyword">toList</span>());</div><div class="line"><span class="keyword">long</span> estimatedTime2 = System.currentTimeMillis() - startTime2;</div><div class="line">System.out.<span class="keyword">println</span>(<span class="string">"Time1: "</span> + estimatedTime + <span class="string">" Time2: "</span> + estimatedTime2);</div><div class="line"></div><div class="line"><span class="comment">// Output:</span></div><div class="line"><span class="comment">// Time1: 1987 Time2: 1029</span></div></pre></td></tr></table></figure>
+
+<p>If the process doesn’t involve any synchronized variable or operation (here the collect operation is working on one list, therefore need to be locked and unlocked), the improvement would be much significant. The parallel processes is managed under the hood, which means one cannot assign explicitly how many threads to run. But in this way the code has more “cross platform” benifits, so that one don’t have change the parallel settings since everything is handled automatically.</p>
+<ul>
+<li>Laziness</li>
+</ul>
+<p>Harnessing the benifit of lazy evaluation will help to improve the efficiency of the program. One can define a lot of <code>Stream</code> but as long as it’s not followed by a terminal operation, it’s not executed. Furthermore, due to laziness feature of <code>Stream</code>, datas are generated “on the fly” instead of creating a whole list of elements and then iterate through them, not to mention <code>List</code> cannot be infinent, which a <code>Stream</code> can achieve easily.</p>
+<h3 id="5-_Limitations">5. Limitations</h3>
+<ul>
+<li>Functional interface limitation</li>
+</ul>
+<p>As mentioned before, lambdas in Java 8 are “Syntactic Sugars” to map “arrow style” to anonymous inner class definations. All lambdas must has a functional interface with matching signature. This is due to Java’s static type limitation. Although <code>java.util.function</code> package has provided a variaty of functional interfaces with generic types and compiler can use type inference to find the matching interface, one has to define his own interfaces if they’re not provided, for example, a lambda with 3 input arguments.</p>
+<ul>
+<li>External variable referencing</li>
+</ul>
+<p>Java does not allow changing the value or reference of a outside variable inside an anonymous inner class, and all variables that declared outside the anonymous class are inexplictly restrained to <code>final</code> inside. So this regulation also applies to lambdas.</p>
+<p>For example:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">int a <span class="subst">=</span> <span class="number">1</span>;</div><div class="line">                </div><div class="line"><span class="keyword">Thread</span> t1 <span class="subst">=</span> <span class="literal">new</span> <span class="keyword">Thread</span>(<span class="literal">new</span> Runnable() {     </div><div class="line">    <span class="keyword">public</span> <span class="literal">void</span> run() {</div><div class="line">        a <span class="subst">=</span> <span class="number">2</span>; <span class="comment">// This cannot pass the compilation, because `a` is declared </span></div><div class="line">        <span class="comment">// inexplictly `final` inside, therefore can't be changed.</span></div><div class="line">    }</div><div class="line">});</div><div class="line"></div><div class="line"><span class="keyword">Thread</span> t2 <span class="subst">=</span> <span class="literal">new</span> <span class="keyword">Thread</span>(</div><div class="line">        ()<span class="subst">-&gt;</span>{a <span class="subst">=</span> <span class="number">2</span>;} ); <span class="comment">// This cannot pass either.</span></div></pre></td></tr></table></figure>
+
+<h3 id="6-_References">6. References</h3>
+<p>1: <a href="http://www.ibm.com/developerworks/java/library/j-java8lambdas/index.html" target="_blank" rel="external">http://www.ibm.com/developerworks/java/library/j-java8lambdas/index.html</a></p>
+<p>2: <a href="http://stackoverflow.com/questions/23007422/using-streams-with-primitives-data-types-and-corresponding-wrappers" target="_blank" rel="external">http://stackoverflow.com/questions/23007422/using-streams-with-primitives-data-types-and-corresponding-wrappers</a></p>
+
+      
+    </div>
+
+	
+		
+	
+
+	<hr/>
+
+	
+  </div>
+</article>
+
+
+
+    
+        <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <div class="header">
+      
+  
     <h2 class="title_link"><a href="/2014/08/18/Auto_Timestamp/">Fast Copying Timestamp on Mac</a>
         <small>
             <time datetime="2014-08-18T16:56:19.000Z">Aug 18 2014</time>
@@ -198,69 +391,6 @@
 	
 		
 			<a href="/2014/06/05/bp_ann_in_matlab/#more" class="more-link">Read More</a>
-		
-	
-
-	<hr/>
-
-	
-  </div>
-</article>
-
-
-
-    
-        <article class="post">
-  
-    <div class="gallery">
-  <div class="photoset">
-    
-      <img src="">
-    
-  </div>
-  <div class="control">
-    <div class="prev"></div>
-    <div class="next"></div>
-  </div>
-</div>
-  
-  <div class="post-content">
-    <div class="header">
-      
-  
-    <h2 class="title_link"><a href="/2014/04/25/float-operations-on-arm/">Floating point operations on ARM processor</a>
-        <small>
-            <time datetime="2014-04-25T19:32:34.000Z">Apr 25 2014</time>
-        </small>
-    </h2>
-  
-
-
-    </div>
-
-    <div class="entry">
-      
-        <p>This article is a brief introduction of different implementations of floating point operation on an ARM processor.</p>
-<h3 id="1-_Early_ages">1. Early ages</h3>
-<p>There’s no coprocessor for floating point operations on ARM, those operations are done by CPU, means of which is called <code>Float Math Emulation</code>. Normally each float point operation costs thousands of cycles, which is very inefficient. </p>
-<h3 id="2-_Soft-float">2. Soft-float</h3>
-<p>This is for those situations where the CPU does not contain a <code>floating point unit(FPU)</code>, which is a built-in coprocessor on CPU to deal with floating point operations. </p>
-<p>There are 2 different ways to do floating point operations without FPU: </p>
-<ol>
-<li><p>The kernel will trap all the opcodes related to the FPU and then perform the calculations itself [1]. This is called <code>NWFPE</code> (NetWinder Floating Point Emulator), however, this has now been removed from ARM kernel [2]. As I mentioned before, this is the old fashioned way of implementation, which involves raising of invalid instruction exceptions each time the situation occurs [3]. And this can be very expensive for computation. </p>
-</li>
-<li><p>All floating point operations are translated to specific inline function calls by compiler. This is done by passing flag <code>-mfloat-abi=soft</code> when using <code>gcc</code>, and gcc will use built in software(library) to emulate.</p>
-</li>
-</ol>
-<h3 id="3-_Hard-float">3. Hard-float</h3>
-<p>Nowadays, many chips has hardware <code>FPU</code> support to accelerate fp operations, for ARM familis, this unit is often called <code>VFP</code> (Vector Floating-Point coprocessor). VFP is a fully IEEE-754 compatible floating point unit. But later a much more powerful NEON Advanced SIMD unit was introduced and is suggested instead of VFP by Architecture Reference Manual.</p>
-
-      
-    </div>
-
-	
-		
-			<a href="/2014/04/25/float-operations-on-arm/#more" class="more-link">Read More</a>
 		
 	
 

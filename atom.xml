@@ -4,7 +4,7 @@
   <subtitle><![CDATA[About code, machine learning and part of Hugo's life.]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://hugofeng.info/"/>
-  <updated>2015-03-26T11:05:09.058Z</updated>
+  <updated>2015-03-26T14:08:19.219Z</updated>
   <id>http://hugofeng.info/</id>
   
   <author>
@@ -13,6 +13,31 @@
   </author>
   
   <generator uri="http://zespia.tw/hexo/">Hexo</generator>
+  
+  <entry>
+    <title><![CDATA[leetcode_08 String to Integer (atoi)]]></title>
+    <link href="http://hugofeng.info/2015/03/26/leetcode-08/"/>
+    <id>http://hugofeng.info/2015/03/26/leetcode-08/</id>
+    <published>2015-03-26T13:56:55.000Z</published>
+    <updated>2015-03-26T14:08:05.000Z</updated>
+    <content type="html"><![CDATA[<p><a href="https://leetcode.com/problems/string-to-integer-atoi/" target="_blank" rel="external">leetcode problem site</a></p>
+<p>The requirements are as follows:</p>
+<ul>
+<li>0s cannot be in front of a sign</li>
+<li>sign can appear at most once</li>
+<li>there shouldn’t be spaces between a sign and the real values</li>
+<li>the function will try to interpret as much numbers as it can, which means if a character other than numbers appear after a continuous number sequence, the rest of the string will be ignored, and will return the value interpreted so far</li>
+<li>if overflow happens, return <code>INT_MAX if</code> it’s positive, or <code>INT_MIN</code> if negtive</li>
+<li>if any law above is violated, 0 is returned</li>
+</ul>
+<figure class="highlight C++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="keyword">class</span> Solution {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="keyword">int</span> atoi(<span class="built_in">string</span> str) {</div><div class="line">        <span class="keyword">int</span> len = str.length();</div><div class="line">        <span class="keyword">int</span> sign_count = <span class="number">0</span>;</div><div class="line">        <span class="keyword">int</span> index=<span class="number">0</span>;</div><div class="line">        <span class="keyword">int</span> sign=<span class="number">1</span>;</div><div class="line">        <span class="comment">// skip white spaces at the front</span></div><div class="line">        <span class="keyword">while</span>(str[index]==<span class="string">' '</span>) index++;</div><div class="line">        <span class="comment">// skip sign</span></div><div class="line">        <span class="keyword">while</span>(str[index]==<span class="string">'+'</span> || str[index]==<span class="string">'-'</span>) {</div><div class="line">            <span class="keyword">if</span>(str[index]==<span class="string">'+'</span>) sign_count++;</div><div class="line">            <span class="keyword">else</span> <span class="keyword">if</span>(str[index]==<span class="string">'-'</span>) {</div><div class="line">                sign_count++;</div><div class="line">                sign *= -<span class="number">1</span>;</div><div class="line">            }</div><div class="line">            <span class="comment">// if multiple signs appears, imediately stop</span></div><div class="line">            <span class="keyword">if</span>(sign_count&gt;<span class="number">1</span>) <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">            <span class="comment">// if there're spaces after sign</span></div><div class="line">            <span class="keyword">if</span>(sign_count&gt;<span class="number">0</span> && str[index]==<span class="string">' '</span>) <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">            index++;</div><div class="line">        }</div><div class="line">        <span class="comment">// again, skip '0's</span></div><div class="line">        <span class="keyword">while</span>(str[index]==<span class="string">'0'</span>) index++;</div><div class="line">        <span class="comment">// the following is not numbers </span></div><div class="line">        <span class="comment">// (if all string contents are already read, str[index]=='\0', which is also included here.)</span></div><div class="line">        <span class="keyword">if</span>(str[index]&lt;<span class="string">'0'</span> || str[index]&gt;<span class="string">'9'</span>) <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">        <span class="comment">// now, the rest should be numbers that construct a none-zero integer.</span></div><div class="line">        <span class="comment">// if anything other than 0~9 appears, return 0;</span></div><div class="line">        <span class="comment">// The rest characters that are not numbers are ignored.</span></div><div class="line">        <span class="comment">// Carefull about overflow.</span></div><div class="line">        <span class="keyword">long</span> <span class="keyword">long</span> absolute=<span class="number">0</span>;</div><div class="line">        <span class="keyword">while</span>(index&lt;len && <span class="string">'0'</span>&lt;=str[index] && str[index]&lt;=<span class="string">'9'</span>){</div><div class="line">            absolute = absolute*<span class="number">10</span> + str[index++]-<span class="string">'0'</span>;</div><div class="line">            <span class="comment">// overflow, don't do this check at the end,</span></div><div class="line">            <span class="comment">// because long long absolute can also be overflowed...</span></div><div class="line">            <span class="keyword">if</span>(absolute&gt;INT_MAX || absolute&lt;INT_MIN) <span class="keyword">return</span> sign&gt;<span class="number">0</span>?INT_MAX:INT_MIN;</div><div class="line">        }</div><div class="line">        </div><div class="line">        <span class="comment">// if not overflowed</span></div><div class="line">        <span class="keyword">return</span> (<span class="keyword">int</span>)(sign*absolute);</div><div class="line">    }</div><div class="line">};</div></pre></td></tr></table></figure>
+
+]]></content>
+    
+    
+      <category term="leetcode" scheme="http://hugofeng.info/tags/leetcode/"/>
+    
+  </entry>
   
   <entry>
     <title><![CDATA[leetcode_07 Reverse Integer]]></title>
