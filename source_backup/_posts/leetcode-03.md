@@ -45,6 +45,7 @@ public:
             // update the length of current substring in each iteration
             currentLen = i-tail+1;
         }
+        delete[] array;
         return max(currentLen, maxlen);
     }
 };
