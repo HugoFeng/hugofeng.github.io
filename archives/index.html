@@ -101,6 +101,62 @@
     <div class="header">
       
   
+    <h2 class="title_link"><a href="/2015/03/26/leetcode-09/">leetcode_09 Palindrome Number</a>
+        <small>
+            <time datetime="2015-03-26T19:16:55.000Z">Mar 26 2015</time>
+        </small>
+    </h2>
+  
+
+
+    </div>
+
+    <div class="entry">
+      
+        <p><a href="https://leetcode.com/problems/palindrome-number/" target="_blank" rel="external">leetcode problem site</a></p>
+<p>It is required not to use additional memory, so converting the integer to a string is not possible. Here I’m using recursion.</p>
+<p>There’re two lines need to be dealt carefully:</p>
+<ul>
+<li>Line 16: Cases such as <code>1000021</code> need the length of the sub-sequence of digits be mesured by variable <code>len</code> in stead of the value of the sub-sequence.</li>
+<li>Line 20: the recursive function call should be placed after the first predicate, so that if the first is false, the function won’t be called.</li>
+</ul>
+<figure class="highlight C++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="keyword">class</span> Solution {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="keyword">bool</span> isPalindrome(<span class="keyword">int</span> x) {</div><div class="line">        <span class="comment">// case when x is 0 or negtive</span></div><div class="line">        <span class="keyword">if</span>(x&lt;<span class="number">0</span>) <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line">        <span class="comment">// case when x has one digit</span></div><div class="line">        <span class="keyword">else</span> <span class="keyword">if</span>(x&lt;<span class="number">10</span>) <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">        <span class="comment">// number of digits in x</span></div><div class="line">        <span class="keyword">int</span> len = intLen(x);</div><div class="line">        <span class="keyword">return</span> isPalindrome(x, len) ;</div><div class="line">    }</div><div class="line">    </div><div class="line">    <span class="keyword">bool</span> isPalindrome(<span class="keyword">int</span> x, <span class="keyword">int</span> len) {</div><div class="line">        <span class="comment">// Since this is a sub-sequence of digits of the original number,</span></div><div class="line">        <span class="comment">// zeros might be leading this sequence, so use "len" instead of x&lt;10 to judge.</span></div><div class="line">        <span class="keyword">if</span>(len&lt;<span class="number">2</span>) <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">        <span class="keyword">int</span> low = x%<span class="number">10</span>;</div><div class="line">        <span class="keyword">int</span> devider = myexp(<span class="number">10</span>, len-<span class="number">1</span>);</div><div class="line">        <span class="keyword">int</span> high = x/devider;</div><div class="line">        <span class="keyword">if</span>(high==low && isPalindrome((x%devider-low)/<span class="number">10</span>, len-<span class="number">2</span>)) </div><div class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">        <span class="keyword">else</span> </div><div class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line">    }</div><div class="line">    </div><div class="line">    <span class="keyword">int</span> myexp(<span class="keyword">int</span> base, <span class="keyword">int</span> n){</div><div class="line">        <span class="keyword">int</span> result = <span class="number">1</span>;</div><div class="line">        <span class="keyword">if</span>(n==<span class="number">0</span>) <span class="keyword">return</span> <span class="number">1</span>;</div><div class="line">        <span class="keyword">while</span>(n--) result*=base;</div><div class="line">        <span class="keyword">return</span> result;</div><div class="line">    }</div><div class="line">    </div><div class="line">    <span class="keyword">int</span> intLen(<span class="keyword">int</span> input){</div><div class="line">        <span class="keyword">int</span> len = <span class="number">0</span>;</div><div class="line">        <span class="keyword">while</span>(input){</div><div class="line">            input /= <span class="number">10</span>;</div><div class="line">            len++;</div><div class="line">        }</div><div class="line">        <span class="keyword">return</span> len;</div><div class="line">    }</div><div class="line">};</div></pre></td></tr></table></figure>
+
+
+      
+    </div>
+
+	
+		
+	
+
+	<hr/>
+
+	
+  </div>
+</article>
+
+
+
+    
+        <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <div class="header">
+      
+  
     <h2 class="title_link"><a href="/2015/03/26/leetcode-08/">leetcode_08 String to Integer (atoi)</a>
         <small>
             <time datetime="2015-03-26T13:56:55.000Z">Mar 26 2015</time>
@@ -182,57 +238,6 @@
 <p>This is an easy one. Special cases like 0 should be considered, and most importantly, OVERFLOW should also be taken into account, which I always miss.</p>
 <figure class="highlight C++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="keyword">class</span> Solution {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="keyword">int</span> reverse(<span class="keyword">int</span> x) {</div><div class="line">        <span class="keyword">if</span>(x==<span class="number">0</span>) <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">        <span class="comment">// store the sign, make x non-negtive</span></div><div class="line">        <span class="keyword">int</span> sign = <span class="number">1</span>;</div><div class="line">        <span class="keyword">if</span>(x&lt;<span class="number">0</span>){</div><div class="line">            sign = -<span class="number">1</span>;</div><div class="line">            x *= -<span class="number">1</span>;</div><div class="line">        }</div><div class="line">        <span class="comment">// avoid overflow</span></div><div class="line">        <span class="keyword">long</span> <span class="keyword">long</span> result = <span class="number">0</span>;</div><div class="line">        <span class="keyword">while</span>(x){</div><div class="line">            result = result*<span class="number">10</span> + x%<span class="number">10</span>;</div><div class="line">            x /= <span class="number">10</span>;</div><div class="line">        }</div><div class="line">        <span class="comment">// if there's a overflow</span></div><div class="line">        <span class="keyword">if</span>(result!=(<span class="keyword">int</span>)result) <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">        <span class="keyword">return</span> result*sign;</div><div class="line">    }</div><div class="line">};</div></pre></td></tr></table></figure>
 
-
-      
-    </div>
-
-	
-		
-	
-
-	<hr/>
-
-	
-  </div>
-</article>
-
-
-
-    
-        <article class="post">
-  
-    <div class="gallery">
-  <div class="photoset">
-    
-      <img src="">
-    
-  </div>
-  <div class="control">
-    <div class="prev"></div>
-    <div class="next"></div>
-  </div>
-</div>
-  
-  <div class="post-content">
-    <div class="header">
-      
-  
-    <h2 class="title_link"><a href="/2015/03/25/leetcode-03/">leetcode_03 Longest Substring Without Repeating Characters</a>
-        <small>
-            <time datetime="2015-03-25T20:10:55.000Z">Mar 25 2015</time>
-        </small>
-    </h2>
-  
-
-
-    </div>
-
-    <div class="entry">
-      
-        <p><a href="https://leetcode.com/problems/longest-substring-without-repeating-characters/" target="_blank" rel="external">leetcode problem site</a></p>
-<figure class="highlight C++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="keyword">class</span> Solution {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="keyword">int</span> lengthOfLongestSubstring(<span class="built_in">string</span> s) {</div><div class="line">        <span class="keyword">int</span> length = s.length();</div><div class="line">        <span class="keyword">char</span> *<span class="built_in">array</span> = <span class="keyword">new</span> <span class="keyword">char</span>[length+<span class="number">1</span>];</div><div class="line">        <span class="built_in">strcpy</span>(<span class="built_in">array</span>, s.c_str());</div><div class="line">        </div><div class="line">        <span class="keyword">int</span> currentLen = <span class="number">0</span>;</div><div class="line">        <span class="keyword">int</span> maxlen = currentLen;</div><div class="line">        <span class="keyword">int</span> tail = <span class="number">0</span>;</div><div class="line">        </div><div class="line">        <span class="stl_container"><span class="built_in">unordered_map</span>&lt;<span class="keyword">int</span>,<span class="keyword">int</span>&gt;</span> hash;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>;i&lt;length; i++){</div><div class="line">            <span class="keyword">char</span> c=<span class="built_in">array</span>[i];</div><div class="line">            <span class="comment">// if this character appeared before</span></div><div class="line">            <span class="keyword">if</span>(hash.find(c)!=hash.end()){</div><div class="line">                <span class="keyword">int</span> usedTobe = hash[c];</div><div class="line">                hash[c] = i; <span class="comment">// update the latest occurence of this character</span></div><div class="line">                <span class="comment">// if this character has seen within the latest </span></div><div class="line">                <span class="comment">// non-duplicated substring.</span></div><div class="line">                <span class="keyword">if</span>(usedTobe&gt;=tail){</div><div class="line">                    <span class="comment">// Since a duplicate is seen here, </span></div><div class="line">                    <span class="comment">// conclude the last substring.</span></div><div class="line">                    <span class="comment">// If current substring is the longest ever seen, update</span></div><div class="line">                    <span class="keyword">if</span>(currentLen&gt;maxlen) </div><div class="line">                        maxlen=currentLen;            </div><div class="line">                    <span class="comment">// Exclude the previous occurence</span></div><div class="line">                    tail = usedTobe+<span class="number">1</span>; </div><div class="line">                }</div><div class="line">            <span class="comment">// if this is a new character ever seen</span></div><div class="line">            }<span class="keyword">else</span> {</div><div class="line">                hash[c] = i;</div><div class="line">            }</div><div class="line">            </div><div class="line">            <span class="comment">// update the length of current substring in each iteration</span></div><div class="line">            currentLen = i-tail+<span class="number">1</span>;</div><div class="line">        }</div><div class="line">        <span class="keyword">delete</span>[] <span class="built_in">array</span>;</div><div class="line">        <span class="keyword">return</span> max(currentLen, maxlen);</div><div class="line">    }</div><div class="line">};</div></pre></td></tr></table></figure>
-
-<p><a href="https://leetcode.com/discuss/13336/shortest-o-n-dp-solution-with-explanations" target="_blank" rel="external">A more elegant implementation</a>  by others.</p>
 
       
     </div>

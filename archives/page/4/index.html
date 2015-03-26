@@ -101,6 +101,64 @@
     <div class="header">
       
   
+    <h2 class="title_link"><a href="/2014/06/05/bp_ann_in_matlab/">An implementation of Neural Network with Back Propagation in MATLAB</a>
+        <small>
+            <time datetime="2014-06-05T20:45:14.000Z">Jun 5 2014</time>
+        </small>
+    </h2>
+  
+
+
+    </div>
+
+    <div class="entry">
+      
+        <h3 id="Test_the_program_with_a_data_set">Test the program with a data set</h3>
+<ul>
+<li><strong>Network attributes</strong>: 1 hidden layer with 3 neurons, initial biases and weights are set to random from -1 to 1, with 0.5 learning rate</li>
+<li><strong>Target</strong>: XOR(x1, x2)</li>
+<li><strong>Training</strong> set: [x1, x2] = [0 0; 0 1; 1 0; 1 1], y = [0; 1; 1; 0]</li>
+<li><strong>Test set</strong>: (Same as training set),   error = (sum(errors .^ 2))^0.5</li>
+</ul>
+<h4 id="Output">Output</h4>
+<p><img src="/img/bp1.png" alt="Standard diviation of errors with iterations"><br><img src="/img/bp2.png" alt="Program output"><br><img src="/img/bp3.png" alt="Output of trained Neural Network"></p>
+
+      
+    </div>
+
+	
+		
+			<a href="/2014/06/05/bp_ann_in_matlab/#more" class="more-link">Read More</a>
+		
+	
+
+	<hr/>
+
+	
+  </div>
+</article>
+
+
+
+    
+        <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <div class="header">
+      
+  
     <h2 class="title_link"><a href="/2014/04/25/float-operations-on-arm/">Floating point operations on ARM processor</a>
         <small>
             <time datetime="2014-04-25T19:32:34.000Z">Apr 25 2014</time>
@@ -198,93 +256,12 @@
 
 
     
-        <article class="post">
-  
-    <div class="gallery">
-  <div class="photoset">
-    
-      <img src="">
-    
-  </div>
-  <div class="control">
-    <div class="prev"></div>
-    <div class="next"></div>
-  </div>
-</div>
-  
-  <div class="post-content">
-    <div class="header">
-      
-  
-    <h2 class="title_link"><a href="/2014/04/17/Compile OpenCV3.0 on OSX/">Compile OpenCV 3.0 on OSX</a>
-        <small>
-            <time datetime="2014-04-17T15:37:43.000Z">Apr 17 2014</time>
-        </small>
-    </h2>
-  
-
-
-    </div>
-
-    <div class="entry">
-      
-        <h3 id="1-_Install">1. Install</h3>
-<p>Installing OpenCV on Mac can be fairly simple—using <code>homebrew</code>, however, <code>homebrew</code> can only install a stable version of it(currently 2.4.8.2). If you want to have a taste of OpenCV3.0, you’ll have to build from the source. This sometimes can be very annoying[1][2]. After more than a day’s struggle, I find a solution for my machine.</p>
-<p>If you have anaconda installed, probably the vtk module has a version of 5.x, but OpenCV3.0 need vtk at least 6.1.[1]</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ brew <span class="operator"><span class="keyword">install</span> vtk   # This gonna take <span class="keyword">some</span> <span class="keyword">time</span></span></div></pre></td></tr></table></figure>
-
-<p>Now download the latest OpenCV source:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="variable">$ </span>git clone git<span class="variable">@github</span>.<span class="symbol">com:</span><span class="constant">Itseez</span>/opencv.git</div></pre></td></tr></table></figure>
-
-<p>Go to OpenCV source folder, </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="variable">$ </span>mkdir build</div><div class="line"><span class="variable">$ </span>cd build</div><div class="line"><span class="variable">$ </span>cmake <span class="string">"Unix Makefile"</span> -<span class="constant">D</span> <span class="constant">CMAKE_OSX_ARCHITECTURES</span>=x86_64 -<span class="constant">D</span> <span class="constant">BUILD_PERF_TESTS</span>=<span class="constant">OFF</span> ..</div></pre></td></tr></table></figure>
-
-<p>Since OpenCV module ‘viz’ has to be compiled with libc++ instead of libstdc++, we need to make some changes to the makefiles to ensure it is compiled that way.</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ <span class="keyword">cd</span> modules/viz/CMakeFiles/opencv_viz.dir/</div><div class="line">$ <span class="keyword">vim</span> flags.<span class="keyword">make</span></div></pre></td></tr></table></figure>
-
-<p>Add flag <code>-std=c++11 -stdlib=libc++</code><br>Do the same to <code>build/modules/viz/CMakeFiles/opencv_test_viz.dir/flags.make</code><br>Now back to the build folder. </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ <span class="keyword">make</span> -j8  # Using <span class="number">8</span> threads <span class="keyword">to</span> build</div></pre></td></tr></table></figure>
-
-<p>And it should work fine.<br>Now finish up:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ <span class="keyword">make</span> install</div></pre></td></tr></table></figure>
-
-<h3 id="2-_Check">2. Check</h3>
-<p>There’re generally 2 ways to check OpenCV’s version. </p>
-<ol>
-<li><p>In the OpenCV source folder, version number is defined in file:</p>
-<pre><code> modules<span class="regexp">/core/i</span>nclude<span class="regexp">/opencv2/</span>core<span class="regexp">/version.hpp </span>
-</code></pre></li>
-<li><p>After <code>make install</code>, you can see the copied libraries, they are usually named with version numbers. Like <code>libopencv_core.3.0.0.dylib</code>.</p>
-</li>
-</ol>
-<p>Also, you can use <code>pkg-config</code> to check if the libs are correctly located.</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="variable">$pkg</span>-config --libs opencv</div></pre></td></tr></table></figure>
-
-<p>The output will look like this:</p>
-<pre><code><span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_calib3d.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_contrib.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_core.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cuda.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudaarithm.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudabgsegm.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudafeatures2d.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudafilters.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudaimgproc.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudaoptflow.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudastereo.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_cudawarping.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_features2d.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_flann.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_highgui.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_imgproc.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_legacy.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_ml.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_nonfree.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_objdetect.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_optim.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_photo.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_shape.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_softcascade.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_stitching.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_superres.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_ts.a <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_video.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_videostab.dylib <span class="regexp">/usr/</span>local<span class="regexp">/lib/</span>libopencv_viz.dylib
-</code></pre><h3 id="3-_Reference:">3. Reference:</h3>
-<p>[1] <a href="http://code.opencv.org/issues/3582" target="_blank" rel="external">http://code.opencv.org/issues/3582</a><br>[2] <a href="http://stackoverflow.com/questions/19671827/opencv-installation-on-mac-os-x" target="_blank" rel="external">http://stackoverflow.com/questions/19671827/opencv-installation-on-mac-os-x</a><br>[3] <a href="http://ibivanchev.blogspot.be/2013/10/opencv-mac-os-x-109.html" target="_blank" rel="external">http://ibivanchev.blogspot.be/2013/10/opencv-mac-os-x-109.html</a></p>
-
-      
-    </div>
-
-	
-		
-	
-
-	<hr/>
-
-	
-  </div>
-</article>
-
-
-
-    
     <nav id="pagination">
   
     <a href="/archives/page/3/" class="alignleft prev">Prev</a>
   
+  
+    <a href="/archives/page/5/" class="alignright next">Next</a>
   
   <div class="clearfix"></div>
 </nav>

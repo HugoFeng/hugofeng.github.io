@@ -1,0 +1,223 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>leetcode_09 Palindrome Number | Flight log</title>
+  <meta name="author" content="Hugo Feng">
+  
+  <meta name="description" content="About code, machine learning, and life">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <meta property="og:title" content="leetcode_09 Palindrome Number"/>
+  <meta property="og:site_name" content="Flight log"/>
+
+  
+    <meta property="og:image" content="undefined"/>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="Flight log" type="application/atom+xml">
+
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css"> 
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+  
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-50169885-1', 'hugofeng.info');
+  ga('send', 'pageview');
+</script>
+
+
+</head>
+
+
+<body>
+<div class="container">
+    <div class="row">
+        <div class="header">
+    <ul class="nav nav-pills pull-right">
+        <li>
+            <div>
+                <ol class="breadcrumb">
+                    
+						<li><a href="/">Home</a></li>
+                    
+						<li><a href="/archives">Archives</a></li>
+                    
+						<li><a href="/about">About</a></li>
+                    
+
+					<!--%- partial('post/blogroll') %--> 
+
+                    <li> <a href="/atom.xml">Rss</a> </li>
+                </ol>
+            </div>
+        </li>
+    </ul>
+
+    <h1>
+        <a href="/">Flight log</a> 
+    </h1>
+    <h5 class="text-muted"> About code, machine learning and part of Hugo&#39;s life.  </h5>
+</div>
+
+    </div>
+
+    <hr> 
+
+    <div class="row">
+        <!--Body content-->
+		<article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <div class="header">
+      
+  
+    <h2 class="title">leetcode_09 Palindrome Number
+        <small>
+            <time datetime="2015-03-26T19:16:55.000Z">Mar 26 2015</time>
+        </small>
+    </h2>
+  
+
+
+    </div>
+
+    <div class="entry">
+      
+        <p><a href="https://leetcode.com/problems/palindrome-number/" target="_blank" rel="external">leetcode problem site</a></p>
+<p>It is required not to use additional memory, so converting the integer to a string is not possible. Here I’m using recursion.</p>
+<p>There’re two lines need to be dealt carefully:</p>
+<ul>
+<li>Line 16: Cases such as <code>1000021</code> need the length of the sub-sequence of digits be mesured by variable <code>len</code> in stead of the value of the sub-sequence.</li>
+<li>Line 20: the recursive function call should be placed after the first predicate, so that if the first is false, the function won’t be called.</li>
+</ul>
+<figure class="highlight C++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="keyword">class</span> Solution {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="keyword">bool</span> isPalindrome(<span class="keyword">int</span> x) {</div><div class="line">        <span class="comment">// case when x is 0 or negtive</span></div><div class="line">        <span class="keyword">if</span>(x&lt;<span class="number">0</span>) <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line">        <span class="comment">// case when x has one digit</span></div><div class="line">        <span class="keyword">else</span> <span class="keyword">if</span>(x&lt;<span class="number">10</span>) <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">        <span class="comment">// number of digits in x</span></div><div class="line">        <span class="keyword">int</span> len = intLen(x);</div><div class="line">        <span class="keyword">return</span> isPalindrome(x, len) ;</div><div class="line">    }</div><div class="line">    </div><div class="line">    <span class="keyword">bool</span> isPalindrome(<span class="keyword">int</span> x, <span class="keyword">int</span> len) {</div><div class="line">        <span class="comment">// Since this is a sub-sequence of digits of the original number,</span></div><div class="line">        <span class="comment">// zeros might be leading this sequence, so use "len" instead of x&lt;10 to judge.</span></div><div class="line">        <span class="keyword">if</span>(len&lt;<span class="number">2</span>) <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">        <span class="keyword">int</span> low = x%<span class="number">10</span>;</div><div class="line">        <span class="keyword">int</span> devider = myexp(<span class="number">10</span>, len-<span class="number">1</span>);</div><div class="line">        <span class="keyword">int</span> high = x/devider;</div><div class="line">        <span class="keyword">if</span>(high==low && isPalindrome((x%devider-low)/<span class="number">10</span>, len-<span class="number">2</span>)) </div><div class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">        <span class="keyword">else</span> </div><div class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line">    }</div><div class="line">    </div><div class="line">    <span class="keyword">int</span> myexp(<span class="keyword">int</span> base, <span class="keyword">int</span> n){</div><div class="line">        <span class="keyword">int</span> result = <span class="number">1</span>;</div><div class="line">        <span class="keyword">if</span>(n==<span class="number">0</span>) <span class="keyword">return</span> <span class="number">1</span>;</div><div class="line">        <span class="keyword">while</span>(n--) result*=base;</div><div class="line">        <span class="keyword">return</span> result;</div><div class="line">    }</div><div class="line">    </div><div class="line">    <span class="keyword">int</span> intLen(<span class="keyword">int</span> input){</div><div class="line">        <span class="keyword">int</span> len = <span class="number">0</span>;</div><div class="line">        <span class="keyword">while</span>(input){</div><div class="line">            input /= <span class="number">10</span>;</div><div class="line">            len++;</div><div class="line">        }</div><div class="line">        <span class="keyword">return</span> len;</div><div class="line">    }</div><div class="line">};</div></pre></td></tr></table></figure>
+
+
+      
+    </div>
+
+	
+
+	<hr/>
+
+	
+		<nav id="pagination">
+			
+			
+				<a href="/2015/03/26/leetcode-08/" class="alignright next" title="leetcode_08 String to Integer (atoi)">leetcode_08 String to Integer (atoi)</a>
+			
+		</nav>
+	
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">Comments</h1>
+  <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  </div>
+</section>
+
+
+    </div>
+
+    <div class="footer">
+        <div class="alignleft">
+  
+	  2015 &copy; Hugo Feng,
+  
+  All rights reserved. Powered by <a href="http://zespia.tw/hexo/" title="Hexo">Hexo</a>. Hosted on <a href="https://github.com/HugoFeng/hugofeng.github.io" title="GitHub">GitHub</a>.
+</div>
+<div class="clearfix"></div>
+
+    </div>
+
+</div>
+
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+<script type="text/javascript">
+var disqus_shortname = 'hugofeng';
+
+(function(){
+  var dsq = document.createElement('script');
+  dsq.type = 'text/javascript';
+  dsq.async = true;
+  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+  (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+}());
+</script>
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+    (function($){
+        $('.fancybox').fancybox();
+    })(jQuery);
+</script>
+
+
+
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+</body>
+</html>
