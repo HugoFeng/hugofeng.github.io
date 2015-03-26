@@ -4,7 +4,7 @@
   <subtitle><![CDATA[About code, machine learning and part of Hugo's life.]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://hugofeng.info/"/>
-  <updated>2015-03-26T09:10:42.837Z</updated>
+  <updated>2015-03-26T11:05:09.058Z</updated>
   <id>http://hugofeng.info/</id>
   
   <author>
@@ -13,6 +13,23 @@
   </author>
   
   <generator uri="http://zespia.tw/hexo/">Hexo</generator>
+  
+  <entry>
+    <title><![CDATA[leetcode_07 Reverse Integer]]></title>
+    <link href="http://hugofeng.info/2015/03/26/leetcode-07/"/>
+    <id>http://hugofeng.info/2015/03/26/leetcode-07/</id>
+    <published>2015-03-26T11:00:15.000Z</published>
+    <updated>2015-03-26T11:04:50.000Z</updated>
+    <content type="html"><![CDATA[<p><a href="https://leetcode.com/problems/reverse-integer/" target="_blank" rel="external">leetcode problem site</a></p>
+<p>This is an easy one. Special cases like 0 should be considered, and most importantly, OVERFLOW should also be taken into account, which I always miss.</p>
+<figure class="highlight C++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="keyword">class</span> Solution {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="keyword">int</span> reverse(<span class="keyword">int</span> x) {</div><div class="line">        <span class="keyword">if</span>(x==<span class="number">0</span>) <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">        <span class="comment">// store the sign, make x non-negtive</span></div><div class="line">        <span class="keyword">int</span> sign = <span class="number">1</span>;</div><div class="line">        <span class="keyword">if</span>(x&lt;<span class="number">0</span>){</div><div class="line">            sign = -<span class="number">1</span>;</div><div class="line">            x *= -<span class="number">1</span>;</div><div class="line">        }</div><div class="line">        <span class="comment">// avoid overflow</span></div><div class="line">        <span class="keyword">long</span> <span class="keyword">long</span> result = <span class="number">0</span>;</div><div class="line">        <span class="keyword">while</span>(x){</div><div class="line">            result = result*<span class="number">10</span> + x%<span class="number">10</span>;</div><div class="line">            x /= <span class="number">10</span>;</div><div class="line">        }</div><div class="line">        <span class="comment">// if there's a overflow</span></div><div class="line">        <span class="keyword">if</span>(result!=(<span class="keyword">int</span>)result) <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">        <span class="keyword">return</span> result*sign;</div><div class="line">    }</div><div class="line">};</div></pre></td></tr></table></figure>
+
+]]></content>
+    
+    
+      <category term="leetcode" scheme="http://hugofeng.info/tags/leetcode/"/>
+    
+  </entry>
   
   <entry>
     <title><![CDATA[leetcode_03 Longest Substring Without Repeating Characters]]></title>
