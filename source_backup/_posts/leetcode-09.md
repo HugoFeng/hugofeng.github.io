@@ -31,7 +31,7 @@ public:
         // zeros might be leading this sequence, so use "len" instead of x<10 to judge.
         if(len<2) return true;
         int low = x%10;
-        int devider = myexp(10, len-1);
+        int devider = pow(10, len-1);
         int high = x/devider;
         if(high==low && isPalindrome((x%devider-low)/10, len-2)) 
             return true;
@@ -39,7 +39,7 @@ public:
             return false;
     }
     
-    int myexp(int base, int n){
+    int pow(int base, int n){
         int result = 1;
         if(n==0) return 1;
         while(n--) result*=base;
